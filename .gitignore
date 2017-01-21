@@ -1,0 +1,5 @@
+.bzr
+*.pyc
+__pycache__
+/.testrepository
+*.egg-info
