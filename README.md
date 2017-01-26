@@ -7,7 +7,8 @@ The library can perform DKIM, SPF, and DMARC validation, and the results are pac
 ```
 authenticate_message(message, "example.com", ip='192.168.50.81', mail_from="test.com", helo="domain.of.sender.net")
 
-"Authentication-Results: example.com; spf=none smtp.helo=domain.of.sender.net smtp.mailfrom=test.com; dkim=pass header.d=valimail.com; dmarc=pass header.from=valimail.com"
+Authentication-Results: example.com; spf=none smtp.helo=domain.of.sender.net smtp.mailfrom=test.com; 
+    dkim=pass header.d=valimail.com; dmarc=pass header.from=valimail.com
 ````
 
 ## Signature
