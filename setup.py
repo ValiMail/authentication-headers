@@ -20,4 +20,10 @@ setup(
         "Topic :: Utilities",
         "License :: OSI Approved :: MIT License",
     ],
+    install_requires = [
+        "py3dns",
+        "pyspf",
+        "dkimpy>=0.6.0",
+        "authentication-results",        
+    ],
 )
