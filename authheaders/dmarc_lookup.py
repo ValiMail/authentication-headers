@@ -17,7 +17,6 @@
 #
 ############################################################################
 from __future__ import absolute_import, unicode_literals, print_function
-from enum import Enum
 from pkg_resources import resource_filename  # Part of setuptools
 try:
     # typing is needed by mypy, but is unused otherwise

@@ -9,7 +9,7 @@ setup(
     license = "MIT",
     keywords = ["email", "headers", "SPF", "DKIM", "DMARC", "ARC"],
     url = "https://github.com/ValiMail/authentication-headers",
-    packages=['authheaders', 'tests'],
+    packages=['authheaders', 'test'],
     classifiers=[
         "Development Status :: 4 - Beta",
         "Topic :: Utilities",
@@ -20,5 +20,7 @@ setup(
         "pyspf",
         "dkimpy>=0.6.0",
         "authentication-results",
+        "publicsuffix",
+        "ipaddr",
     ],
 )
