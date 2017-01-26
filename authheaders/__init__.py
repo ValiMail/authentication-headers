@@ -127,7 +127,7 @@ def authenticate_message(msg, authserv_id, spf=True, dkim=True, dmarc=True, ip=N
 
 
 def sign_message(msg, selector, domain, privkey, sig_headers, sig='DKIM', auth_res=None,
-                 identity=None, length=None, canonicalize=(b'relaxed', b'relaxed')):
+                 identity=None, length=None, canonicalize=(b'relaxed', b'relaxed'), timestamp=None):
     """Sign an RFC822 message and return the ARC or DKIM header(s)
     @param msg: an RFC822 formatted message (with either \\n or \\r\\n line endings)
     @param selector: the DKIM selector value for the signature
@@ -139,12 +139,14 @@ def sign_message(msg, selector, domain, privkey, sig_headers, sig='DKIM', auth_r
     @param identity: (DKIM) the DKIM identity value for the signature (default "@"+domain)
     @param length: (DKIM) true if the l= tag should be included to indicate body length (default False)
     @param canonicalize: (DKIM) the canonicalization algorithms to use (default (Relaxed, Relaxed))
+    @param timestamp: (for testing) a manual timestamp to use for signature generation
     @return: The DKIM-Message-Signature, or ARC set headers
     """
     
     if sig=="DKIM":
         return DKIM(msg).sign(selector, domain, privkey, include_headers=sig_headers,
-                              identity=identity, length=length, canonicalize=canonicalize)
+                              identity=identity, length=length, canonicalize=canonicalize, timestamp=timestamp)
     else:
-        cv, results, comment = dkim.arc_verify(msg)
-        return ARC(msg).sign(selector, domain, privkey, auth_res, cv, include_headers=sig_headers)
+        cv, results, comment = arc_verify(msg)
+        return ARC(msg).sign(selector, domain, privkey, auth_res, cv, include_headers=sig_headers, timestamp=timestamp)
+
