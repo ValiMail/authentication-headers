@@ -1,8 +1,4 @@
-import os
-from setuptools import setup
-
-def read(fname):
-    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+from distutils.core import setup
 
 setup(
     name = "authentication-headers",
@@ -11,10 +7,10 @@ setup(
     author_email = "gene@valimail.com",
     description = ("A library wrapping email authentication header verification and generation."),
     license = "MIT",
-    keywords = "email headers SPF DKIM DMARC ARC",
-    url = "",
-    packages=['authentication-headers', 'tests'],
-    long_description=read('README'),
+    keywords = ["email", "headers", "SPF", "DKIM", "DMARC", "ARC"],
+    url = "https://github.com/ValiMail/authentication-headers",
+    packages=['authheaders', 'tests'],
+    long_description=read('README.md'),
     classifiers=[
         "Development Status :: 4 - Beta",
         "Topic :: Utilities",
