@@ -10,7 +10,6 @@ setup(
     keywords = ["email", "headers", "SPF", "DKIM", "DMARC", "ARC"],
     url = "https://github.com/ValiMail/authentication-headers",
     packages=['authheaders', 'tests'],
-    long_description=read('README.md'),
     classifiers=[
         "Development Status :: 4 - Beta",
         "Topic :: Utilities",
