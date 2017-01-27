@@ -19,7 +19,7 @@ setup(
         "py3dns",
         "pyspf",
         "dkimpy>=0.6.0",
-        "authentication-results",
+        "authentication-results-python",
         "publicsuffix",
         "ipaddr",
     ],
