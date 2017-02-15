@@ -3,5 +3,5 @@ setup.cfg
 setup.py
 authheaders/__init__.py
 authheaders/dmarc_lookup.py
-test/__init__.py
+authheaders/public_suffix_list.txt
 test/test_authentication.py

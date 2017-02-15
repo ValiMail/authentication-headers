@@ -30,9 +30,9 @@ class TestAuthenticateMessage(unittest.TestCase):
     def setUp(self):
         records = {b"google2048._domainkey.valimail.com.": "v=DKIM1\; k=rsa\; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAg1i2lO83x/r58cbo/JSBwfZrrct6S/yi4L6GsG3wNgFE9lO3orzBwnAEJJM33WrvJfOWia1fAx64Vs1QEpYtLFCzyeIhDDMaHv/G8NgKPgnWK4gI8/x2Q2SYCmiqil66oHaSOC2phMDRI+c/Q35MlZbc2FqlgevpKzdCg+YE6mYA0XN7/tdQplbx4meLVsVPI" "L9QCP4yu8oBsNqcwyxkQafJucVyoZI+VEO+dySw3QXNdmJhr7y1hD1tCNqoAG0iphKQVXPXmGnGhaxaVU92Kq5UKL6/LiTZ1piqyJfJyZ/zCgH+mtY8MNk9f7LHpwFljI7TbYmr7MmV3d6xj3sghwIDAQAB",
                    b"_dmarc.valimail.com.": "v=DMARC1\; p=reject\; rua=mailto:dmarc.reports@valimail.com,mailto:dmarc_agg@vali.email\; ruf=mailto:dmarc.reports@valimail.com,mailto:dmarc_c0cb7153_afrf@vali.email"}
-    
+
         self.dnsfunc = records.get
-        
+
     def test_authenticate_dkim(self):
         msg = b"""DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
         d=valimail.com; s=google2048;
@@ -82,7 +82,33 @@ This is a test!
         res = authenticate_message(msg, "example.com", spf=False, dnsfunc=self.dnsfunc)
         self.assertEqual(res, "Authentication-Results: example.com; dkim=pass header.d=valimail.com; dmarc=pass header.from=valimail.com")
 
-class TestSignMessage(unittest.TestCase):        
+    def test_prev(self):
+        msg = b"""DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=valimail.com; s=google2048;
+        h=mime-version:from:date:message-id:subject:to;
+        bh=3VWGQGY+cSNYd1MGM+X6hRXU0stl8JCaQtl4mbX/j2I=;
+        b=gntRk4rCVYIGkpO09ROkbs3n4YSIcp/Pi7tUnSIgs8uS+uZ2a77dG+/qlSvnk+mWET
+         IBrkt1YpDzev/0ITTDy/zgTHjPiQIFcg9Q+3hn3sTz8ExCyM8/YYgoPqSs3oUXn3jwXk
+         N/wpMuF29LTVp1gpkYzaoCDNPGd1Wag6Vh2lw65S7ruECCAdBm5XeSnvTOzIC0E/jmEt
+         3hvaPiKAohCAsC5JAN89EATPOjnYJL4Q6X6p2qUsusz/8tkHuYvReHmxQkjQ0/N3fPP0
+         6VfkIrPOHympq6qDUizbjiBmgiMWKnarrptblJvyt66/aIHx+QamP6LUA+/RUFY1q7TG
+         MSDg==
+MIME-Version: 1.0
+From: Gene Shuman <gene@valimail.com>
+Date: Wed, 25 Jan 2017 16:13:31 -0800
+Message-ID: <CANtLugNVcUMfjVH22FN=+A6Y_Ss+QX_=GnJ3xGfDY1iuEbbuRA@mail.gmail.com>
+Subject: Test
+To: geneshuman@gmail.com
+Content-Type: text/plain; charset=UTF-8
+
+This is a test!
+"""
+        prev = "Authentication-Results: example.com; spf=pass smtp.mailfrom=gmail.com"
+        res = authenticate_message(msg, "example.com", prev=prev, spf=False, dmarc=False, dnsfunc=self.dnsfunc)
+        self.assertEqual(res, "Authentication-Results: example.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass header.d=valimail.com")
+
+
+class TestSignMessage(unittest.TestCase):
     def test_arc_sign(self):
         msg = b"""MIME-Version: 1.0
 Return-Path: <jqd@d1.example.org>
@@ -115,14 +141,14 @@ uEzxBDAr518Z8VFbR41in3W4Y3yCDgQlLlcETrS+zYcL
 """
 
         auth_res = b"""lists.example.org; spf=pass smtp.mfrom=jqd@d1.example; dkim=pass (1024-bit key) header.i=@d1.example; dmarc=pass"""
-        
+
         res = sign_message(msg, b"dummy", b"example.org", privkey, b"from:to:date:subject:mime-version:arc-authentication-results".split(b':'), sig='ARC', auth_res=auth_res, timestamp="12345")
 
         headers = [b'ARC-Seal: i=1; cv=none; a=rsa-sha256; d=example.org; s=dummy; t=12345;  b=FWOEyeRJ8YiqKt9x9GaZF62z/iy9i2606XLlnLC+Mfzf+8M92eWPPb50Pa+9d1iMwVRVeE 8Rsdh6a7t+on2vLqBzFCuhA48AyQBVOMf4YgYKIxYbVHa5TD7GUOGSNCse8PGblJTcogmTL7 FhApk4DJZQkuE4EWrMRMpzfxG24l4=', b'ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=example.org; s=dummy; t=12345;  h=from : to : date : subject : mime-version :  arc-authentication-results;  bh=KWSe46TZKCcDbH4klJPo+tjk5LWJnVRlP5pvjXFZYLQ=;  b=LNev0+5hTRq5x+38IWMxbyZBXxZS6Ddacbul1XE7lEBKDXxh9MUvdGvCqdDoSSlUmJyx/s PLfucMfmftarx1xVIRPJeUrtuOZuUdQMPVpQcfQJ9pUfE1TG1KS4E2suCz3TF7uxu5OjaP21 mjquuQP5lQe2fsnwBjBgVFcsSAwPw=', b'ARC-Authentication-Results: i=1; lists.example.org; spf=pass smtp.mfrom=jqd@d1.example; dkim=pass (1024-bit key) header.i=@d1.example; dmarc=pass']
-        
+
         headers = [b"".join(x.split()) for x in headers]
         res = [b"".join(x.split()) for x in res]
         self.assertEqual(res, headers)
-        
+
 if __name__ == '__main__':
     unittest.main()

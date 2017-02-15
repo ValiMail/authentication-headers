@@ -4,3 +4,4 @@ __pycache__
 /.testrepository
 *.egg-info
 dist/
+build/

@@ -18,7 +18,7 @@
 # Contact: Gene Shuman <gene@valimail.com>
 #
 
-import spf
+#import spf
 import re
 from authheaders.dmarc_lookup import receiver_record, get_org_domain
 from authres import SPFAuthenticationResult, DKIMAuthenticationResult, AuthenticationResultsHeader
@@ -46,18 +46,16 @@ def check_dkim(msg, dnsfunc=None):
     except DKIMException as e:
         res = 'fail'
 
-    header_i = None
-    if b'i' in d.signature_fields:
-        header_i = d.signature_fields[b'i'].decode('ascii')
-        
-    return DKIMAuthenticationResult(result=res, header_d=d.signature_fields[b'd'].decode('ascii'),
-                                    header_i=header_i)
+    header_i = d.signature_fields.get(b'i', b'').decode('ascii')
+    header_d = d.signature_fields.get(b'd', b'').decode('ascii')
+
+    return DKIMAuthenticationResult(result=res, header_d=header_d, header_i=header_i)
 
 
 def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None):
     # get from domain
     headers, _ = rfc822_parse(msg)
-    from_headers = [x[1] for x in headers if x[0].lower() == b"from"]    
+    from_headers = [x[1] for x in headers if x[0].lower() == b"from"]
     if len(from_headers) != 1:
         raise Exception("")
     from_header = from_headers[0]
@@ -66,13 +64,13 @@ def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None):
     res = re.search(b'@(.*)>', from_header)
     from_domain = res.group(1).decode('ascii')
     print(from_domain)
-    
+
     # get dmarc record
     if(dnsfunc):
         record, _ = receiver_record(from_domain, dnsfunc=dnsfunc)
     else:
         record, _ = receiver_record(from_domain)
-        
+
     adkim = record.get('adkim', 'r')
     aspf  = record.get('aspf',  'r')
 
@@ -89,27 +87,31 @@ def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None):
             result = "pass"
         elif adkim == "r" and get_org_domain(from_domain) == get_org_domain(dkim_result.header_d):
             result = "pass"
-        
+
     return DMARCAuthenticationResult(result=result, header_from=from_domain)
 
 
-def authenticate_message(msg, authserv_id, spf=True, dkim=True, dmarc=True, ip=None, mail_from=None, helo=None, dnsfunc=None):
+def authenticate_message(msg, authserv_id, prev=None, spf=True, dkim=True, dmarc=True, ip=None, mail_from=None, helo=None, dnsfunc=None):
     """Authenticate an RFC822 message and return the Authentication-Results header
     @param msg: an RFC822 formatted message (with either \\n or \\r\\n line endings)
     @param authserv_id: The id of the server performing the authentication
+    @param prev: an existing authentication results header to append results to
     @param spf: Perform SPF check
     @param dkim: Perform DKIM check
     @param dmarc: Perform DMARC check
-    @param ip: (SPF) IP address of incoming request 
+    @param ip: (SPF) IP address of incoming request
     @param mail_from: (SPF) Sender declared in MAIL FROM
     @param helo: (SPF) EHLO/HELO domain of incoming message
     @param dnsfunc: An optional dns lookup function (intended for testing)
     @return: The Authentication-Results header
     """
-    
+
     spf_result = dkim_result = None
     results = []
-    
+    if prev:
+        arobj = AuthenticationResultsHeader.parse(prev)
+        results = arobj.results
+
     if spf:
         spf_result = check_spf(ip, mail_from, helo)
         results.append(spf_result)
@@ -122,12 +124,12 @@ def authenticate_message(msg, authserv_id, spf=True, dkim=True, dmarc=True, ip=N
         dmarc_result = check_dmarc(msg, spf_result, dkim_result, dnsfunc=dnsfunc)
         results.append(dmarc_result)
 
-    auth_res = AuthenticationResultsHeader(authserv_id=authserv_id, results=results)    
+    auth_res = AuthenticationResultsHeader(authserv_id=authserv_id, results=results)
     return str(auth_res)
 
 
 def sign_message(msg, selector, domain, privkey, sig_headers, sig='DKIM', auth_res=None,
-                 identity=None, length=None, canonicalize=(b'relaxed', b'relaxed'), timestamp=None):
+                 identity=None, length=None, canonicalize=(b'relaxed', b'relaxed'), timestamp=None, logger=None):
     """Sign an RFC822 message and return the ARC or DKIM header(s)
     @param msg: an RFC822 formatted message (with either \\n or \\r\\n line endings)
     @param selector: the DKIM selector value for the signature
@@ -135,18 +137,19 @@ def sign_message(msg, selector, domain, privkey, sig_headers, sig='DKIM', auth_r
     @param privkey: a PKCS#1 private key in base64-encoded text form
     @param sig_headers: a list of strings indicating which headers are to be signed
     @param sig: "DKIM" or "ARC"
-    @param auth_results: (ARC) the RFC 7601 authentication-results header 
+    @param auth_results: (ARC) the RFC 7601 authentication-results header
     @param identity: (DKIM) the DKIM identity value for the signature (default "@"+domain)
     @param length: (DKIM) true if the l= tag should be included to indicate body length (default False)
     @param canonicalize: (DKIM) the canonicalization algorithms to use (default (Relaxed, Relaxed))
     @param timestamp: (for testing) a manual timestamp to use for signature generation
+    @param logger: An optional logger
     @return: The DKIM-Message-Signature, or ARC set headers
+    @raises: DKIMException if mis-configured
     """
-    
+
     if sig=="DKIM":
-        return DKIM(msg).sign(selector, domain, privkey, include_headers=sig_headers,
+        return DKIM(msg, logger=logger).sign(selector, domain, privkey, include_headers=sig_headers,
                               identity=identity, length=length, canonicalize=canonicalize, timestamp=timestamp)
     else:
-        cv, results, comment = arc_verify(msg)
-        return ARC(msg).sign(selector, domain, privkey, auth_res, cv, include_headers=sig_headers, timestamp=timestamp)
-
+        cv, results, comment = arc_verify(msg, logger=logger)
+        return ARC(msg, logger=logger).sign(selector, domain, privkey, auth_res, cv, include_headers=sig_headers, timestamp=timestamp)
