@@ -106,17 +106,19 @@ def authenticate_message(msg, authserv_id, prev=None, spf=True, dkim=True, dmarc
     @return: The Authentication-Results header
     """
 
-    spf_result = dkim_result = None
     results = []
     if prev:
         arobj = AuthenticationResultsHeader.parse(prev)
         results = arobj.results
 
-    if spf:
+    spf_result = next((x for x in results if type(x) == SPFAuthenticationResult), None)
+    dkim_result = next((x for x in results if type(x) == DKIMAuthenticationResult), None)
+
+    if spf and not spf_result:
         spf_result = check_spf(ip, mail_from, helo)
         results.append(spf_result)
 
-    if dkim:
+    if dkim and not dkim_result:
         dkim_result = check_dkim(msg, dnsfunc=dnsfunc)
         results.append(dkim_result)
 
