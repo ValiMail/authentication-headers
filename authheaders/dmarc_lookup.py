@@ -23,8 +23,7 @@ try:
     from typing import Dict, Text  # noqa: F401
 except ImportError:
     pass
-from dns.resolver import (query as dns_query, NXDOMAIN, NoAnswer,
-                          NoNameservers)
+import DNS
 from publicsuffix import PublicSuffixList
 
 def answer_to_dict(answer):
@@ -35,6 +34,11 @@ def answer_to_dict(answer):
     retval = {t[0].strip(): t[1].strip() for t in rawTags}
     return retval
 
+def dns_query(name, qtype='TXT'):
+    response = DNS.DnsRequest(name, qtype=qtype).req()
+    if not response.answers:
+        return None
+    return '"' + b''.join(response.answers[0]['data']).decode('utf-8') + '"'
 
 def lookup_receiver_record(host, dnsfunc=dns_query):
     # type: (str), dnsfunc(optional) -> Dict[unicode, unicode]
@@ -46,15 +50,13 @@ def lookup_receiver_record(host, dnsfunc=dns_query):
           record then None is returned.
     :rtype: {tag => value}
     '''
-    
+
     dmarcHost = '_dmarc.{0}'.format(host)
 
-    try:
-        dnsAnswer = dnsfunc(dmarcHost, 'TXT')
-    except (NXDOMAIN, NoAnswer, NoNameservers):
+    answer = dnsfunc(dmarcHost, 'TXT')
+    if not answer:
         return None
     else:
-        answer = str(dnsAnswer[0])
         # Check that v= field is the first one in the answer (which is in
         # double quotes) as per Section 7.1 (5):
         #     In particular, the "v=DMARC1" tag is mandatory and MUST appear
@@ -65,7 +67,7 @@ def lookup_receiver_record(host, dnsfunc=dns_query):
             return tags
         else:
             return None # maybe raise exception instead?
-        
+
 
 def receiver_record(host, dnsfunc=dns_query):
     # type: (str), dnsfunc(optional) -> (Dict[unicode, unicode], is_subdomain)
@@ -90,7 +92,7 @@ def receiver_record(host, dnsfunc=dns_query):
     # lookup for org_domain
     newHost = get_org_domain(domain)
     retval = lookup_receiver_record(newHost)
-    
+
     return (retval, True)
 
 
@@ -98,17 +100,17 @@ def get_org_domain(domain):
     fn = get_suffix_list_file_name()
     with open(fn) as suffixList:
         psl = PublicSuffixList(suffixList)
-        return psl.get_public_suffix(domain)           
+        return psl.get_public_suffix(domain)
 
-    
+
 def get_suffix_list_file_name():
     # type: () -> Text
     '''Get the file name for the public-suffix list data file
 
     :returns: The filename for the datafile in this module.
-    :rtype: ``str``'''    
+    :rtype: ``str``'''
     # TODO: automatically update the suffix list data file
     # <https://publicsuffix.org/list/effective_tld_names.dat>
-    
+
     retval = resource_filename('authheaders', 'public_suffix_list.txt')
     return retval

@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name = "authheaders",
-    version = "0.6.1",
+    version = "0.7",
     author = "Gene Shuman",
     author_email = "gene@valimail.com",
     description = ("A library wrapping email authentication header verification and generation."),
@@ -20,6 +20,7 @@ setup(
     },
     install_requires = [
         "dkimpy>=0.6.1",
+        "py3dns",
         "authres",
         "publicsuffix",
         "ipaddress",

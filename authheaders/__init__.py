@@ -18,7 +18,7 @@
 # Contact: Gene Shuman <gene@valimail.com>
 #
 
-#import spf
+import spf
 import re
 from authheaders.dmarc_lookup import receiver_record, get_org_domain
 from authres import SPFAuthenticationResult, DKIMAuthenticationResult, AuthenticationResultsHeader
@@ -76,7 +76,7 @@ def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None):
 
     # get result
     result = "fail"
-    if spf_result and spf_result.result == "pass" :
+    if spf_result and spf_result.result == "pass":
         if aspf == "s" and from_domain == spf_result.smtp_mailfrom:
             result = "pass"
         elif aspf == "r" and get_org_domain(from_domain) == get_org_domain(spf_result.smtp_mailfrom):
