@@ -53,9 +53,10 @@ def lookup_receiver_record(host, dnsfunc=dns_query):
 
     dmarcHost = '_dmarc.{0}'.format(host)
 
-    answer = dnsfunc(dmarcHost, 'TXT')
+    answer = dnsfunc(dmarcHost)
+    print(answer)
     if not answer:
-        return None
+        return {}
     else:
         # Check that v= field is the first one in the answer (which is in
         # double quotes) as per Section 7.1 (5):
@@ -66,7 +67,7 @@ def lookup_receiver_record(host, dnsfunc=dns_query):
             tags = answer_to_dict(answer)
             return tags
         else:
-            return None # maybe raise exception instead?
+            return {} # maybe raise exception instead?
 
 
 def receiver_record(host, dnsfunc=dns_query):
@@ -85,13 +86,13 @@ def receiver_record(host, dnsfunc=dns_query):
     '''
     hostSansDmarc = host if host[:7] != '_dmarc.' else host[7:]
 
-    retval = lookup_receiver_record(hostSansDmarc)
+    retval = lookup_receiver_record(hostSansDmarc, dnsfunc)
     if retval:
         return (retval, False)
 
     # lookup for org_domain
-    newHost = get_org_domain(domain)
-    retval = lookup_receiver_record(newHost)
+    newHost = get_org_domain(host)
+    retval = lookup_receiver_record(newHost, dnsfunc)
 
     return (retval, True)
 
