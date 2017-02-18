@@ -18,12 +18,17 @@
 # Contact: Gene Shuman <gene@valimail.com>
 #
 
-import spf
 import re
 from authheaders.dmarc_lookup import receiver_record, get_org_domain
 from authres import SPFAuthenticationResult, DKIMAuthenticationResult, AuthenticationResultsHeader
 from authres.dmarc import DMARCAuthenticationResult
 from dkim import ARC, DKIM, arc_verify, dkim_verify, DKIMException, rfc822_parse
+
+# Please accept my appologies for doing this
+try:
+    import spf
+except ImportError:
+    pass
 
 __all__ = [
     "authenticate_message",
@@ -105,6 +110,9 @@ def authenticate_message(msg, authserv_id, prev=None, spf=True, dkim=True, dmarc
     @param dnsfunc: An optional dns lookup function (intended for testing)
     @return: The Authentication-Results header
     """
+
+    if spf and 'spf' not in sys.modules:
+        raise Exception('pyspf must be installed manually for spf authentication')
 
     results = []
     if prev:

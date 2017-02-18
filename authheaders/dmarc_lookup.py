@@ -23,7 +23,7 @@ try:
     from typing import Dict, Text  # noqa: F401
 except ImportError:
     pass
-import DNS
+from dns.resolver import (query, NXDOMAIN, NoAnswer, NoNameservers)
 from publicsuffix import PublicSuffixList
 
 def answer_to_dict(answer):
@@ -34,11 +34,11 @@ def answer_to_dict(answer):
     retval = {t[0].strip(): t[1].strip() for t in rawTags}
     return retval
 
-def dns_query(name, qtype='TXT'):
-    response = DNS.DnsRequest(name, qtype=qtype).req()
-    if not response.answers:
+def dns_query(name):
+    try:
+        return query(dmarcHost, 'TXT')
+    except (NXDOMAIN, NoAnswer, NoNameservers):
         return None
-    return '"' + b''.join(response.answers[0]['data']).decode('utf-8') + '"'
 
 def lookup_receiver_record(host, dnsfunc=dns_query):
     # type: (str), dnsfunc(optional) -> Dict[unicode, unicode]
@@ -54,7 +54,6 @@ def lookup_receiver_record(host, dnsfunc=dns_query):
     dmarcHost = '_dmarc.{0}'.format(host)
 
     answer = dnsfunc(dmarcHost)
-    print(answer)
     if not answer:
         return {}
     else:
