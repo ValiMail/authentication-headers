@@ -68,7 +68,6 @@ def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None):
     # kind of janky
     res = re.search(b'@(.*)>', from_header)
     from_domain = res.group(1).decode('ascii')
-    print(from_domain)
 
     # get dmarc record
     if(dnsfunc):
