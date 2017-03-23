@@ -138,13 +138,14 @@ def authenticate_message(msg, authserv_id, prev=None, spf=True, dkim=True, dmarc
     return str(auth_res)
 
 
-def chain_validation(msg, logger=None):
+def chain_validation(msg, logger=None, dnsfunc=None):
     """ Compute the chain validation status of an inbound message.
     Note:  When it is standardized, this results should be a part of Authentication-Results
     @param msg: an RFC822 formatted message (with either \\n or \\r\\n line endings)
     @param logger: An optional logger
+    @param dnsfunc: An optional dns lookup function (intended for testing)
     """
-    cv, results, comment = arc_verify(msg, logger=logger)
+    cv, results, comment = arc_verify(msg, logger=logger, dnsfunc=dnsfunc)
 
     return cv
 
