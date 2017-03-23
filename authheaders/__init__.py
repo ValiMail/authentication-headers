@@ -137,7 +137,18 @@ def authenticate_message(msg, authserv_id, prev=None, spf=True, dkim=True, dmarc
     return str(auth_res)
 
 
-def sign_message(msg, selector, domain, privkey, sig_headers, sig='DKIM', auth_res=None,
+def chain_validation(msg, logger=None):
+    """ Compute the chain validation status of an inbound message.
+    Note:  When it is standardized, this results should be a part of Authentication-Results
+    @param msg: an RFC822 formatted message (with either \\n or \\r\\n line endings)
+    @param logger: An optional logger
+    """
+    cv, results, comment = arc_verify(msg, logger=logger)
+
+    return cv
+
+
+def sign_message(msg, selector, domain, privkey, sig_headers, sig='DKIM', auth_res=None, ARC_chain_validation=b'none',
                  identity=None, length=None, canonicalize=(b'relaxed', b'relaxed'), timestamp=None, logger=None):
     """Sign an RFC822 message and return the ARC or DKIM header(s)
     @param msg: an RFC822 formatted message (with either \\n or \\r\\n line endings)
@@ -147,6 +158,7 @@ def sign_message(msg, selector, domain, privkey, sig_headers, sig='DKIM', auth_r
     @param sig_headers: a list of strings indicating which headers are to be signed
     @param sig: "DKIM" or "ARC"
     @param auth_results: (ARC) the RFC 7601 authentication-results header
+    @param ARC_chain_validation: (ARC) the ARC chain validation of an inbound message
     @param identity: (DKIM) the DKIM identity value for the signature (default "@"+domain)
     @param length: (DKIM) true if the l= tag should be included to indicate body length (default False)
     @param canonicalize: (DKIM) the canonicalization algorithms to use (default (Relaxed, Relaxed))
@@ -160,5 +172,4 @@ def sign_message(msg, selector, domain, privkey, sig_headers, sig='DKIM', auth_r
         return DKIM(msg, logger=logger).sign(selector, domain, privkey, include_headers=sig_headers,
                               identity=identity, length=length, canonicalize=canonicalize, timestamp=timestamp)
     else:
-        cv, results, comment = arc_verify(msg, logger=logger)
-        return ARC(msg, logger=logger).sign(selector, domain, privkey, auth_res, cv, include_headers=sig_headers, timestamp=timestamp)
+        return ARC(msg, logger=logger).sign(selector, domain, privkey, auth_res, ARC_chain_validation, include_headers=sig_headers, timestamp=timestamp)
