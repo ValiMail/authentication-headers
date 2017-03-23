@@ -33,6 +33,7 @@ except ImportError:
 __all__ = [
     "authenticate_message",
     "sign_message",
+    "chain_validation"
     ]
 
 
