@@ -21,6 +21,7 @@
 import re
 from authheaders.dmarc_lookup import receiver_record, get_org_domain
 from authres import SPFAuthenticationResult, DKIMAuthenticationResult, AuthenticationResultsHeader
+from authres.arc import ARCAuthenticationResult
 from authres.dmarc import DMARCAuthenticationResult
 from dkim import ARC, DKIM, arc_verify, dkim_verify, DKIMException, rfc822_parse
 
@@ -56,6 +57,30 @@ def check_dkim(msg, dnsfunc=None):
     header_d = d.signature_fields.get(b'd', b'').decode('ascii')
 
     return DKIMAuthenticationResult(result=res, header_d=header_d, header_i=header_i)
+
+
+def check_arc(msg, logger=None, dnsfunc=None):
+    """ Compute the chain validation status of an inbound message.
+    @param msg: an RFC822 formatted message (with either \\n or \\r\\n line endings)
+    @param logger: An optional logger
+    @param dnsfunc: An optional dns lookup function (intended for testing)
+    """
+
+    a = ARC(msg)
+    try:
+        if(dnsfunc):
+            cv, results, comment = a.verify(dnsfunc=dnsfunc)
+        else:
+            cv, results, comment = a.verify()            
+    except DKIMException as e:
+        cv, results, comment = CV_Fail, [], "%s" % e
+
+    if len(results) > 0:
+        header_d = results[0]['as-domain'].decode('ascii')
+    else:
+        header_d = None
+
+    return ARCAuthenticationResult(result=cv.decode('ascii'), header_d=header_d)
 
 
 def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None):
@@ -96,7 +121,7 @@ def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None):
     return DMARCAuthenticationResult(result=result, header_from=from_domain)
 
 
-def authenticate_message(msg, authserv_id, prev=None, spf=True, dkim=True, dmarc=True, ip=None, mail_from=None, helo=None, dnsfunc=None):
+def authenticate_message(msg, authserv_id, prev=None, spf=True, dkim=True, arc=False, dmarc=True, ip=None, mail_from=None, helo=None, dnsfunc=None):
     """Authenticate an RFC822 message and return the Authentication-Results header
     @param msg: an RFC822 formatted message (with either \\n or \\r\\n line endings)
     @param authserv_id: The id of the server performing the authentication
@@ -104,6 +129,7 @@ def authenticate_message(msg, authserv_id, prev=None, spf=True, dkim=True, dmarc
     @param spf: Perform SPF check
     @param dkim: Perform DKIM check
     @param dmarc: Perform DMARC check
+    @param arc: Perform ARC chain validation check
     @param ip: (SPF) IP address of incoming request
     @param mail_from: (SPF) Sender declared in MAIL FROM
     @param helo: (SPF) EHLO/HELO domain of incoming message
@@ -119,8 +145,9 @@ def authenticate_message(msg, authserv_id, prev=None, spf=True, dkim=True, dmarc
         arobj = AuthenticationResultsHeader.parse(prev)
         results = arobj.results
 
-    spf_result = next((x for x in results if type(x) == SPFAuthenticationResult), None)
+    spf_result  = next((x for x in results if type(x) == SPFAuthenticationResult), None)
     dkim_result = next((x for x in results if type(x) == DKIMAuthenticationResult), None)
+    arc_result  = next((x for x in results if type(x) == ARCAuthenticationResult), None)    
 
     if spf and not spf_result:
         spf_result = check_spf(ip, mail_from, helo)
@@ -130,6 +157,10 @@ def authenticate_message(msg, authserv_id, prev=None, spf=True, dkim=True, dmarc
         dkim_result = check_dkim(msg, dnsfunc=dnsfunc)
         results.append(dkim_result)
 
+    if arc and not arc_result:
+        arc_result = check_arc(msg, None, dnsfunc=dnsfunc)
+        results.append(arc_result)
+        
     if dmarc:
         dmarc_result = check_dmarc(msg, spf_result, dkim_result, dnsfunc=dnsfunc)
         results.append(dmarc_result)
@@ -137,21 +168,9 @@ def authenticate_message(msg, authserv_id, prev=None, spf=True, dkim=True, dmarc
     auth_res = AuthenticationResultsHeader(authserv_id=authserv_id, results=results)
     return str(auth_res)
 
-
-def chain_validation(msg, logger=None, dnsfunc=None):
-    """ Compute the chain validation status of an inbound message.
-    Note:  When it is standardized, this results should be a part of Authentication-Results
-    @param msg: an RFC822 formatted message (with either \\n or \\r\\n line endings)
-    @param logger: An optional logger
-    @param dnsfunc: An optional dns lookup function (intended for testing)
-    """
-    cv, results, comment = arc_verify(msg, logger=logger, dnsfunc=dnsfunc)
-
-    return cv
-
-
-def sign_message(msg, selector, domain, privkey, sig_headers, sig='DKIM', auth_res=None, ARC_chain_validation=b'none',
-                 identity=None, length=None, canonicalize=(b'relaxed', b'relaxed'), timestamp=None, logger=None):
+def sign_message(msg, selector, domain, privkey, sig_headers, sig='DKIM', srv_id=None,
+                 identity=None, length=None, canonicalize=(b'relaxed', b'relaxed'), timestamp=None,
+                 logger=None, standardize=False):
     """Sign an RFC822 message and return the ARC or DKIM header(s)
     @param msg: an RFC822 formatted message (with either \\n or \\r\\n line endings)
     @param selector: the DKIM selector value for the signature
@@ -159,13 +178,13 @@ def sign_message(msg, selector, domain, privkey, sig_headers, sig='DKIM', auth_r
     @param privkey: a PKCS#1 private key in base64-encoded text form
     @param sig_headers: a list of strings indicating which headers are to be signed
     @param sig: "DKIM" or "ARC"
-    @param auth_results: (ARC) the RFC 7601 authentication-results header
-    @param ARC_chain_validation: (ARC) the ARC chain validation of an inbound message
+    @param srv_id: an authserv_id to identify AR headers to sign
     @param identity: (DKIM) the DKIM identity value for the signature (default "@"+domain)
     @param length: (DKIM) true if the l= tag should be included to indicate body length (default False)
     @param canonicalize: (DKIM) the canonicalization algorithms to use (default (Relaxed, Relaxed))
     @param timestamp: (for testing) a manual timestamp to use for signature generation
     @param logger: An optional logger
+    @param standardize: A testing flag for arc to output a standardized header format
     @return: The DKIM-Message-Signature, or ARC set headers
     @raises: DKIMException if mis-configured
     """
@@ -174,4 +193,4 @@ def sign_message(msg, selector, domain, privkey, sig_headers, sig='DKIM', auth_r
         return DKIM(msg, logger=logger).sign(selector, domain, privkey, include_headers=sig_headers,
                               identity=identity, length=length, canonicalize=canonicalize, timestamp=timestamp)
     else:
-        return ARC(msg, logger=logger).sign(selector, domain, privkey, auth_res, ARC_chain_validation, include_headers=sig_headers, timestamp=timestamp)
+        return ARC(msg, logger=logger).sign(selector, domain, privkey, srv_id, include_headers=sig_headers, timestamp=timestamp, standardize=standardize)

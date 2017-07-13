@@ -21,7 +21,7 @@
 import unittest
 
 import sys
-from authheaders import authenticate_message, chain_validation, sign_message
+from authheaders import authenticate_message, sign_message
 
 #import logging
 #logging.basicConfig(level=10)
@@ -114,7 +114,7 @@ class TestChainValidation(unittest.TestCase):
 
         self.dnsfunc = records.get
 
-    def test_chain_validation_pass(self):
+    def test_arc_pass(self):
         msg = b"""MIME-Version: 1.0
 Return-Path: <jqd@d1.example.org>
 ARC-Seal: a=rsa-sha256;
@@ -153,9 +153,10 @@ This is a test message.
 --J.
 """
 
-        cv = chain_validation(msg, dnsfunc=self.dnsfunc)
-        self.assertEqual(cv, b'pass')
-
+        prev = "Authentication-Results: example.com; spf=pass smtp.mailfrom=gmail.com"
+        res = authenticate_message(msg, "example.com", prev=prev, arc=True, dkim=False, spf=False, dmarc=False, dnsfunc=self.dnsfunc)
+        self.assertEqual(res, "Authentication-Results: example.com; spf=pass smtp.mailfrom=gmail.com; arc=pass header.d=example.org")
+        
 
     def test_chain_validation_fail(self):
         msg = b"""MIME-Version: 1.0
@@ -196,12 +197,17 @@ This is a test message.
 --J.
 """
 
-        cv = chain_validation(msg, dnsfunc=self.dnsfunc)
-        self.assertEqual(cv, b'fail')
-
+        prev = "Authentication-Results: example.com; spf=pass smtp.mailfrom=gmail.com"
+        res = authenticate_message(msg, "example.com", prev=prev, arc=True, dkim=False, spf=False, dmarc=False, dnsfunc=self.dnsfunc)
+        self.assertEqual(res, "Authentication-Results: example.com; spf=pass smtp.mailfrom=gmail.com; arc=fail header.d=example.org")
+        
 class TestSignMessage(unittest.TestCase):
     def test_arc_sign(self):
-        msg = b"""MIME-Version: 1.0
+        msg = b"""Authentication-Results: lists.example.org; arc=none;
+  spf=pass smtp.mfrom=jqd@d1.example; 
+  dkim=pass (1024-bit key) header.i=@d1.example; 
+  dmarc=pass
+MIME-Version: 1.0
 Return-Path: <jqd@d1.example.org>
 Received: by 10.157.14.6 with HTTP; Tue, 3 Jan 2017 12:22:54 -0800 (PST)
 Message-ID: <54B84785.1060301@d1.example.org>
@@ -231,11 +237,9 @@ uEzxBDAr518Z8VFbR41in3W4Y3yCDgQlLlcETrS+zYcL
 -----END RSA PRIVATE KEY-----
 """
 
-        auth_res = b"""lists.example.org; spf=pass smtp.mfrom=jqd@d1.example; dkim=pass (1024-bit key) header.i=@d1.example; dmarc=pass"""
+        res = sign_message(msg, b"dummy", b"example.org", privkey, b"mime-version:date:from:to:subject".split(b':'), sig='ARC', srv_id="lists.example.org", timestamp="12345", standardize=True)
 
-        res = sign_message(msg, b"dummy", b"example.org", privkey, b"from:to:date:subject:mime-version:arc-authentication-results".split(b':'), ARC_chain_validation = b'none', sig='ARC', auth_res=auth_res, timestamp="12345")
-
-        headers = [b'ARC-Seal: i=1; cv=none; a=rsa-sha256; d=example.org; s=dummy; t=12345;  b=FWOEyeRJ8YiqKt9x9GaZF62z/iy9i2606XLlnLC+Mfzf+8M92eWPPb50Pa+9d1iMwVRVeE 8Rsdh6a7t+on2vLqBzFCuhA48AyQBVOMf4YgYKIxYbVHa5TD7GUOGSNCse8PGblJTcogmTL7 FhApk4DJZQkuE4EWrMRMpzfxG24l4=', b'ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=example.org; s=dummy; t=12345;  h=from : to : date : subject : mime-version :  arc-authentication-results;  bh=KWSe46TZKCcDbH4klJPo+tjk5LWJnVRlP5pvjXFZYLQ=;  b=LNev0+5hTRq5x+38IWMxbyZBXxZS6Ddacbul1XE7lEBKDXxh9MUvdGvCqdDoSSlUmJyx/s PLfucMfmftarx1xVIRPJeUrtuOZuUdQMPVpQcfQJ9pUfE1TG1KS4E2suCz3TF7uxu5OjaP21 mjquuQP5lQe2fsnwBjBgVFcsSAwPw=', b'ARC-Authentication-Results: i=1; lists.example.org; spf=pass smtp.mfrom=jqd@d1.example; dkim=pass (1024-bit key) header.i=@d1.example; dmarc=pass']
+        headers = [b'ARC-Seal: a=rsa-sha256; b=Pg8Yyk1AgYy2l+kb6iy+mY106AXm5EdgDwJhLP7+XyT6yaS38ZUho+bmgSDorV+LyARH4A 967A/oWMX3coyC7pAGyI+hA3+JifL7P3/aIVP4ooRJ/WUgT79snPuulxE15jg6FgQE68ObA1 /hy77BxdbD9EQxFGNcr/wCKQoeKJ8=; cv=none; d=example.org; i=1; s=dummy; t=12345', b'ARC-Message-Signature: a=rsa-sha256; b=XWeK9DxQ8MUm+Me5GLZ5lQ3L49RdoFv7m7VlrAkKb3/C7jjw33TrTY0KYI5lkowvEGnAtm 5lAqLz67FxA/VrJc2JiYFQR/mBoJLLz/hh9y77byYmSO9tLfIDe2A83+6QsXHO3K6PxTz7+v rCB4wHD9GADeUKVfHzmpZhFuYOa88=; bh=KWSe46TZKCcDbH4klJPo+tjk5LWJnVRlP5pvjXFZYLQ=; c=relaxed/relaxed; d=example.org; h=mime-version:date:from:to:subject; i=1; s=dummy; t=12345', b'ARC-Authentication-Results: i=1; lists.example.org; arc=none; spf=pass smtp.mfrom=jqd@d1.example; dkim=pass (1024-bit key) header.i=@d1.example; dmarc=pass']
 
         headers = [b"".join(x.split()) for x in headers]
         res = [b"".join(x.split()) for x in res]
@@ -243,3 +247,5 @@ uEzxBDAr518Z8VFbR41in3W4Y3yCDgQlLlcETrS+zYcL
 
 if __name__ == '__main__':
     unittest.main()
+
+
