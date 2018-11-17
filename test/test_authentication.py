@@ -155,8 +155,8 @@ This is a test message.
 
         prev = "Authentication-Results: example.com; spf=pass smtp.mailfrom=gmail.com"
         res = authenticate_message(msg, "example.com", prev=prev, arc=True, dkim=False, spf=False, dmarc=False, dnsfunc=self.dnsfunc)
-        self.assertEqual(res, "Authentication-Results: example.com; spf=pass smtp.mailfrom=gmail.com; arc=pass header.d=example.org")
-        
+        self.assertEqual(res, "Authentication-Results: example.com; spf=pass smtp.mailfrom=gmail.com; arc=pass")
+
 
     def test_chain_validation_fail(self):
         msg = b"""MIME-Version: 1.0
@@ -199,13 +199,13 @@ This is a test message.
 
         prev = "Authentication-Results: example.com; spf=pass smtp.mailfrom=gmail.com"
         res = authenticate_message(msg, "example.com", prev=prev, arc=True, dkim=False, spf=False, dmarc=False, dnsfunc=self.dnsfunc)
-        self.assertEqual(res, "Authentication-Results: example.com; spf=pass smtp.mailfrom=gmail.com; arc=fail header.d=example.org")
-        
+        self.assertEqual(res, "Authentication-Results: example.com; spf=pass smtp.mailfrom=gmail.com; arc=fail")
+
 class TestSignMessage(unittest.TestCase):
     def test_arc_sign(self):
         msg = b"""Authentication-Results: lists.example.org; arc=none;
-  spf=pass smtp.mfrom=jqd@d1.example; 
-  dkim=pass (1024-bit key) header.i=@d1.example; 
+  spf=pass smtp.mfrom=jqd@d1.example;
+  dkim=pass (1024-bit key) header.i=@d1.example;
   dmarc=pass
 MIME-Version: 1.0
 Return-Path: <jqd@d1.example.org>
@@ -247,5 +247,3 @@ uEzxBDAr518Z8VFbR41in3W4Y3yCDgQlLlcETrS+zYcL
 
 if __name__ == '__main__':
     unittest.main()
-
-

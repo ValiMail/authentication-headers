@@ -1,11 +1,12 @@
 Metadata-Version: 1.1
 Name: authheaders
-Version: 0.8.6
-Summary: A  library wrapping email authentication header verification and generation.
+Version: 0.9.1
+Summary: A library wrapping email authentication header verification and generation.
 Home-page: https://github.com/ValiMail/authentication-headers
 Author: Gene Shuman
 Author-email: gene@valimail.com
 License: MIT
+Description-Content-Type: UNKNOWN
 Description: UNKNOWN
 Keywords: email,headers,SPF,DKIM,DMARC,ARC
 Platform: UNKNOWN

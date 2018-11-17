@@ -33,7 +33,8 @@ except ImportError:
 
 __all__ = [
     "authenticate_message",
-    "sign_message"
+    "sign_message",
+    "chain_validation"
     ]
 
 
@@ -70,16 +71,11 @@ def check_arc(msg, logger=None, dnsfunc=None):
         if(dnsfunc):
             cv, results, comment = a.verify(dnsfunc=dnsfunc)
         else:
-            cv, results, comment = a.verify()            
+            cv, results, comment = a.verify()
     except DKIMException as e:
         cv, results, comment = CV_Fail, [], "%s" % e
 
-    if len(results) > 0:
-        header_d = results[0]['as-domain'].decode('ascii')
-    else:
-        header_d = None
-
-    return ARCAuthenticationResult(result=cv.decode('ascii'), header_d=header_d)
+    return ARCAuthenticationResult(result=cv.decode('ascii'))
 
 
 def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None):
@@ -146,7 +142,7 @@ def authenticate_message(msg, authserv_id, prev=None, spf=True, dkim=True, arc=F
 
     spf_result  = next((x for x in results if type(x) == SPFAuthenticationResult), None)
     dkim_result = next((x for x in results if type(x) == DKIMAuthenticationResult), None)
-    arc_result  = next((x for x in results if type(x) == ARCAuthenticationResult), None)    
+    arc_result  = next((x for x in results if type(x) == ARCAuthenticationResult), None)
 
     if spf and not spf_result:
         spf_result = check_spf(ip, mail_from, helo)
@@ -159,7 +155,7 @@ def authenticate_message(msg, authserv_id, prev=None, spf=True, dkim=True, arc=F
     if arc and not arc_result:
         arc_result = check_arc(msg, None, dnsfunc=dnsfunc)
         results.append(arc_result)
-        
+
     if dmarc:
         dmarc_result = check_dmarc(msg, spf_result, dkim_result, dnsfunc=dnsfunc)
         results.append(dmarc_result)
