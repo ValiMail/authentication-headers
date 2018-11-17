@@ -36,7 +36,7 @@ def answer_to_dict(answer):
 
 def dns_query(name):
     try:
-        return query(dmarcHost, 'TXT')
+        return query(name, 'TXT')
     except (NXDOMAIN, NoAnswer, NoNameservers):
         return None
 
