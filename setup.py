@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name = "authheaders",
-    version = "0.9.3",
+    version = "0.9.4",
     author = "Gene Shuman",
     author_email = "gene@valimail.com",
     description = ("A library wrapping email authentication header verification and generation."),
