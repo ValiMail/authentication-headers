@@ -1,6 +1,7 @@
 UNRELEASED Version 0.9.4
-  - Added CHANGES file
-  - Switch SPF check to use current vice legacy pyspf API
+  - Added CHANGES file (only covers 0.9.3 and later)
+  - Switched SPF check to use current vice legacy pyspf API
+  - Added COPYING file to document package licenses
 
 2018-10-30 Version 0.9.3
   - Swtiched to using upstream dkimpy, rather than obselete Valimail fork

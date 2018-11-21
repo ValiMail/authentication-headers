@@ -11,6 +11,8 @@
 # WARRANTIES OF TITLE, MERCHANTABILITY, AGAINST INFRINGEMENT, AND FITNESS
 # FOR A PARTICULAR PURPOSE.
 #
+# Original software part of https://github.com/groupserver/gs.dmarc/
+#
 # This has been modified from the original software.
 # 01/24/2017 Valimail Inc
 # Contact: Gene Shuman <gene@valimail.com>
