@@ -1,0 +1,3 @@
+include CHANGES
+include MANIFEST.in
+include COPYING
