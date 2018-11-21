@@ -39,7 +39,7 @@ __all__ = [
 
 
 def check_spf(ip, mail_from, helo):
-    res, _, reason = spf.check2(ip, mail_from, helo)
+    res, reason = spf.check2(ip, mail_from, helo)
     return SPFAuthenticationResult(result=res, reason=reason, smtp_mailfrom=mail_from, smtp_helo=helo)
 
 
