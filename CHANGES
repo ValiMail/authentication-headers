@@ -1,0 +1,6 @@
+UNRELEASED Version 0.9.4
+  - Added CHANGES file
+  - Switch SPF check to use current vice legacy pyspf API
+
+2018-10-30 Version 0.9.3
+  - Swtiched to using upstream dkimpy, rather than obselete Valimail fork
