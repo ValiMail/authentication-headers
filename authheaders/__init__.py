@@ -19,6 +19,7 @@
 #
 
 import re
+import sys
 from authheaders.dmarc_lookup import receiver_record, get_org_domain
 from authres import SPFAuthenticationResult, DKIMAuthenticationResult, AuthenticationResultsHeader
 from authres.arc import ARCAuthenticationResult
