@@ -1,6 +1,8 @@
 UNRELEASED Version 0.9.4
   - Added new pslupdate option to setup.py so embedded public suffix list copy
     can be easily updated
+  - Added new psllocal option to setup.py to set the location of a system
+    public suffix list to use in lieu of the embedded copy
   - Fixed SPF checks to they work and switched SPF check to use current vice
     legacy pyspf API
   - Added COPYING file to document package licenses

@@ -28,6 +28,34 @@ class UpdatePublicSuffixList(distutils.cmd.Command):
         request.urlretrieve(url, tmpfile)
         os.rename(tmpfile, 'authheaders/public_suffix_list.txt')
 
+class SetPSLLocation(distutils.cmd.Command):
+    description = "Set location of system copy of PSL to use instead of embedded copy."
+    user_options = [
+        ('path=', None, 'Specify path to system PSL.'),
+    ]
+
+    def initialize_options(self):
+        self.path = None
+
+    def finalize_options(self):
+        assert os.path.isfile(self.path) == True, 'Local public suffix list file does not exist'
+
+    def run(self):
+        f = open('authheaders/findpsl.py', 'w')
+        f.write("location = '{0}'\r\n".format(self.path))
+        f.close()
+
+
+data = {
+    'authheaders': ['public_suffix_list.txt'],
+}
+try:
+    if os.path.getmtime('authheaders/findpsl.py') >= os.path.getmtime('setup.py'):
+        data = {}
+except FileNotFoundError:
+    pass
+
+
 setup(
     name = "authheaders",
     version = "0.9.4",
@@ -37,16 +65,15 @@ setup(
     license = "MIT",
     keywords = ["email", "headers", "SPF", "DKIM", "DMARC", "ARC"],
     url = "https://github.com/ValiMail/authentication-headers",
+    zip_safe=False,
     packages=['authheaders'],
     classifiers=[
         "Development Status :: 4 - Beta",
         "Topic :: Utilities",
         "License :: OSI Approved :: MIT License",
     ],
-    package_data={
-        'authheaders': ['public_suffix_list.txt'],
-    },
-    install_requires = [
+    package_data=data,
+    install_requires=[
         "dkimpy>=0.7.1",
         "authres>=1.0.1",
         "publicsuffix",
@@ -54,6 +81,7 @@ setup(
         "dnspython"
     ],
     cmdclass={
-        'pslupdate': UpdatePublicSuffixList,
+        'psllocal': SetPSLLocation,
+        'pslupdate': UpdatePublicSuffixList
     },
 )
