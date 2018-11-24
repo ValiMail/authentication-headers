@@ -3,8 +3,12 @@ import distutils.cmd
 import distutils.log
 import setuptools
 import tempfile
-from urllib import request
 import os
+import sys
+if sys.version_info[0] == 3:
+  from urllib import request
+else:
+  import urllib as request
 
 class UpdatePublicSuffixList(distutils.cmd.Command):
     """Update embedded copy of PSL from publicsuffix.org."""
@@ -49,11 +53,18 @@ class SetPSLLocation(distutils.cmd.Command):
 data = {
     'authheaders': ['public_suffix_list.txt'],
 }
-try:
-    if os.path.getmtime('authheaders/findpsl.py') >= os.path.getmtime('setup.py'):
-        data = {}
-except FileNotFoundError:
-    pass
+if sys.version_info[0] == 3:
+    try:
+        if os.path.getmtime('authheaders/findpsl.py') >= os.path.getmtime('setup.py'):
+            data = {}
+    except FileNotFoundError:
+        pass
+else: # because the error is different in python2.7
+    try:
+        if os.path.getmtime('authheaders/findpsl.py') >= os.path.getmtime('setup.py'):
+            data = {}
+    except OSError:
+        pass
 
 
 setup(
