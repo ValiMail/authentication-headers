@@ -30,3 +30,27 @@ ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=example.org; s=du
 ARC-Authentication-Results: i=1; lists.example.org; spf=pass smtp.mfrom=jqd@d1.example; 
     dkim=pass (1024-bit key) header.i=@d1.example; dmarc=pass
 ```
+
+## Public Suffix List (PSL)
+DMARC uses the public suffix list (https://publicsuffix.org) to determine
+organizational boundaries.  An embedded copy of the list is included in the
+package.
+
+The PSL does not change rapidly.  A setup.py extension is provided to download
+the current revision.  This should be run prior to new package releases and
+may also be run prior to local package installation (if installing via
+setuptools from a local copy of the package):
+
+$ python3 setup.py pslupdate
+$ python3 setup.py install
+
+Some operating systems offer a system copy of the PSL.  When available, it
+should be used, since they are generally kept updated.  As an example, in
+Debian GNU/Linux, prior to installation of this package, one would install
+the publicsuffix package and then update this package's configuration to use
+it instead:
+
+$ sudo apt install publicsuffix
+$ python3 setup.py psllocal --path='/usr/share/publicsuffix/public_suffix_list.dat'
+$ python3 setup.py install
+
