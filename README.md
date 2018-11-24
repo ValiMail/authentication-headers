@@ -41,8 +41,8 @@ the current revision.  This should be run prior to new package releases and
 may also be run prior to local package installation (if installing via
 setuptools from a local copy of the package):
 
-$ python3 setup.py pslupdate
-$ python3 setup.py install
+$ python3 setup.py pslupdate<br />
+$ python3 setup.py install<br />
 
 Some operating systems offer a system copy of the PSL.  When available, it
 should be used, since they are generally kept updated.  As an example, in
@@ -50,7 +50,6 @@ Debian GNU/Linux, prior to installation of this package, one would install
 the publicsuffix package and then update this package's configuration to use
 it instead:
 
-$ sudo apt install publicsuffix
-$ python3 setup.py psllocal --path='/usr/share/publicsuffix/public_suffix_list.dat'
+$ sudo apt install publicsuffix<br />
+$ python3 setup.py psllocal --path='/usr/share/publicsuffix/public_suffix_list.dat'<br />
 $ python3 setup.py install
-
