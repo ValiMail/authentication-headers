@@ -80,3 +80,9 @@ PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
 LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
 EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+authheaders/public_suffix_list.txt
+Licensed under MPL 2.0 (see included file, MPL-2.0)
+Note: This file is in the source distribution.  It may be in the binary
+distribution/installed package depending on if the package is configured to
+use a system copy of the public suffix list.
