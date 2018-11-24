@@ -66,6 +66,9 @@ else: # because the error is different in python2.7
     except OSError:
         pass
 
+# READM.md support instroduce in setuptools 36.4.0
+if tuple(setuptools.__version__.split('.')) < ('36', '4', '0'):
+    raise Exception('authheaders requires setuptools version 36.4.0 or later')
 
 setup(
     name = "authheaders",
