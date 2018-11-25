@@ -3,6 +3,8 @@ UNRELEASED Version 0.9.4
     can be easily updated
   - Added new psllocal option to setup.py to set the location of a system
     public suffix list to use in lieu of the embedded copy
+  - Only include domain part of Mail From address in smtp.mailfrom since RFC
+    7601 says this is virtually always the right thing to do
   - Fixed SPF checks to they work and switched SPF check to use current vice
     legacy pyspf API
   - Fixed use of dnspython API in dmarc_lookup.py so DMARC records are

@@ -112,6 +112,7 @@ def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None):
         # The domain in SPF results often includes the local part, even though
         # generally it SHOULD NOT (RFC 7601, Section 2.7.2, last paragraph).
         mail_from_domain = get_domain_part(spf_result.smtp_mailfrom)
+        spf_result.smtp_mailfrom = mail_from_domain
         if aspf == "s" and from_domain == mail_from_domain:
             result = "pass"
         elif aspf == "r" and get_org_domain(from_domain) == get_org_domain(mail_from_domain):
