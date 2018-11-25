@@ -21,92 +21,64 @@
 import unittest
 
 import sys
+import os
 from authheaders import authenticate_message, sign_message
 
 #import logging
 #logging.basicConfig(level=10)
 
-class TestAuthenticateMessage(unittest.TestCase):
-    def setUp(self):
-        records = {b"google2048._domainkey.valimail.com.": "v=DKIM1\; k=rsa\; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAg1i2lO83x/r58cbo/JSBwfZrrct6S/yi4L6GsG3wNgFE9lO3orzBwnAEJJM33WrvJfOWia1fAx64Vs1QEpYtLFCzyeIhDDMaHv/G8NgKPgnWK4gI8/x2Q2SYCmiqil66oHaSOC2phMDRI+c/Q35MlZbc2FqlgevpKzdCg+YE6mYA0XN7/tdQplbx4meLVsVPI" "L9QCP4yu8oBsNqcwyxkQafJucVyoZI+VEO+dySw3QXNdmJhr7y1hD1tCNqoAG0iphKQVXPXmGnGhaxaVU92Kq5UKL6/LiTZ1piqyJfJyZ/zCgH+mtY8MNk9f7LHpwFljI7TbYmr7MmV3d6xj3sghwIDAQAB",
-                   b"_dmarc.valimail.com": '"v=DMARC1\; p=reject\; rua=mailto:dmarc.reports@valimail.com,mailto:dmarc_agg@vali.email\; ruf=mailto:dmarc.reports@valimail.com,mailto:dmarc_c0cb7153_afrf@vali.email"'}
+def read_test_data(filename):
+    """Get the content of the given test data file.
 
-        self.dnsfunc = records.get
+    The files live in tests.
+    """
+    path = os.path.join(os.path.dirname(__file__), filename)
+    with open(path, 'rb') as f:
+        return f.read()
+
+class TestAuthenticateMessage(unittest.TestCase):
+    """Tests updated based on dkimpy tests."""
+
+    def setUp(self):
+        self.message = read_test_data("test.message")
+        self.message2 = read_test_data("test.message_signed")
+        self.key = read_test_data("test.private")
+
+    def dnsfunc(self, domain):
+        _dns_responses = {
+          'test._domainkey.example.com.': read_test_data("test.txt"),
+          '20120113._domainkey.gmail.com.': """k=rsa; \
+p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1Kd87/UeJjenpabgbFwh\
++eBCsSTrqmwIYYvywlbhbqoo2DymndFkbjOVIPIldNs/m40KF+yzMn1skyoxcTUGCQ\
+s8g3FgD2Ap3ZB5DekAo5wMmk4wimDO+U8QzI3SD07y2+07wlNWwIt8svnxgdxGkVbb\
+hzY8i+RQ9DpSVpPbF7ykQxtKXkv/ahW3KjViiAH+ghvvIhkx4xYSIc9oSwVmAl5Oct\
+MEeWUwg8Istjqz8BZeTWbf41fbNhte7Y+YqZOwq1Sd0DbvYAD9NOZK9vlfuac0598H\
+Y+vtSBczUiKERHv1yRbcaQtZFh5wtiRrN04BLUTD21MycBX5jYchHjPY/wIDAQAB""",
+          "_dmarc.example.com": """v=DMARC1\; p=reject\;\
+ rua=mailto:dmarc.reports@valimail.com,mailto:dmarc_agg@vali.email\;\
+ ruf=mailto:dmarc.reports@valimail.com,mailto:dmarc_c0cb7153_afrf@vali.email"""
+        }
+        try:
+            if isinstance(domain, bytes):
+                domain = domain.decode('ascii')
+        except UnicodeDecodeError:
+            return None
+        self.assertTrue(domain in _dns_responses,domain)
+        return _dns_responses[domain]
 
     def test_authenticate_dkim(self):
-        msg = b"""DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=valimail.com; s=google2048;
-        h=mime-version:from:date:message-id:subject:to;
-        bh=3VWGQGY+cSNYd1MGM+X6hRXU0stl8JCaQtl4mbX/j2I=;
-        b=gntRk4rCVYIGkpO09ROkbs3n4YSIcp/Pi7tUnSIgs8uS+uZ2a77dG+/qlSvnk+mWET
-         IBrkt1YpDzev/0ITTDy/zgTHjPiQIFcg9Q+3hn3sTz8ExCyM8/YYgoPqSs3oUXn3jwXk
-         N/wpMuF29LTVp1gpkYzaoCDNPGd1Wag6Vh2lw65S7ruECCAdBm5XeSnvTOzIC0E/jmEt
-         3hvaPiKAohCAsC5JAN89EATPOjnYJL4Q6X6p2qUsusz/8tkHuYvReHmxQkjQ0/N3fPP0
-         6VfkIrPOHympq6qDUizbjiBmgiMWKnarrptblJvyt66/aIHx+QamP6LUA+/RUFY1q7TG
-         MSDg==
-MIME-Version: 1.0
-From: Gene Shuman <gene@valimail.com>
-Date: Wed, 25 Jan 2017 16:13:31 -0800
-Message-ID: <CANtLugNVcUMfjVH22FN=+A6Y_Ss+QX_=GnJ3xGfDY1iuEbbuRA@mail.gmail.com>
-Subject: Test
-To: geneshuman@gmail.com
-Content-Type: text/plain; charset=UTF-8
-
-This is a test!
-"""
-        res = authenticate_message(msg, "example.com", spf=False, dmarc=False, dnsfunc=self.dnsfunc)
-        self.assertEqual(res, "Authentication-Results: example.com; dkim=pass header.d=valimail.com")
-
+        from authheaders import authenticate_message
+        res = authenticate_message(self.message2, "example.com", spf=False, dmarc=False, dnsfunc=self.dnsfunc)
+        self.assertEqual(res, "Authentication-Results: example.com; dkim=pass header.d=example.com header.i=@example.com")
 
     def test_authenticate_dmarc(self):
-        msg = b"""DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=valimail.com; s=google2048;
-        h=mime-version:from:date:message-id:subject:to;
-        bh=3VWGQGY+cSNYd1MGM+X6hRXU0stl8JCaQtl4mbX/j2I=;
-        b=gntRk4rCVYIGkpO09ROkbs3n4YSIcp/Pi7tUnSIgs8uS+uZ2a77dG+/qlSvnk+mWET
-         IBrkt1YpDzev/0ITTDy/zgTHjPiQIFcg9Q+3hn3sTz8ExCyM8/YYgoPqSs3oUXn3jwXk
-         N/wpMuF29LTVp1gpkYzaoCDNPGd1Wag6Vh2lw65S7ruECCAdBm5XeSnvTOzIC0E/jmEt
-         3hvaPiKAohCAsC5JAN89EATPOjnYJL4Q6X6p2qUsusz/8tkHuYvReHmxQkjQ0/N3fPP0
-         6VfkIrPOHympq6qDUizbjiBmgiMWKnarrptblJvyt66/aIHx+QamP6LUA+/RUFY1q7TG
-         MSDg==
-MIME-Version: 1.0
-From: Gene Shuman <gene@valimail.com>
-Date: Wed, 25 Jan 2017 16:13:31 -0800
-Message-ID: <CANtLugNVcUMfjVH22FN=+A6Y_Ss+QX_=GnJ3xGfDY1iuEbbuRA@mail.gmail.com>
-Subject: Test
-To: geneshuman@gmail.com
-Content-Type: text/plain; charset=UTF-8
-
-This is a test!
-"""
-        res = authenticate_message(msg, "example.com", spf=False, dnsfunc=self.dnsfunc)
-        self.assertEqual(res, "Authentication-Results: example.com; dkim=pass header.d=valimail.com; dmarc=pass header.from=valimail.com")
+        res = authenticate_message(self.message2, "example.com", spf=False, dnsfunc=self.dnsfunc)
+        self.assertEqual(res, "Authentication-Results: example.com; dkim=pass header.d=example.com header.i=@example.com; dmarc=pass header.from=example.com")
 
     def test_prev(self):
-        msg = b"""DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=valimail.com; s=google2048;
-        h=mime-version:from:date:message-id:subject:to;
-        bh=3VWGQGY+cSNYd1MGM+X6hRXU0stl8JCaQtl4mbX/j2I=;
-        b=gntRk4rCVYIGkpO09ROkbs3n4YSIcp/Pi7tUnSIgs8uS+uZ2a77dG+/qlSvnk+mWET
-         IBrkt1YpDzev/0ITTDy/zgTHjPiQIFcg9Q+3hn3sTz8ExCyM8/YYgoPqSs3oUXn3jwXk
-         N/wpMuF29LTVp1gpkYzaoCDNPGd1Wag6Vh2lw65S7ruECCAdBm5XeSnvTOzIC0E/jmEt
-         3hvaPiKAohCAsC5JAN89EATPOjnYJL4Q6X6p2qUsusz/8tkHuYvReHmxQkjQ0/N3fPP0
-         6VfkIrPOHympq6qDUizbjiBmgiMWKnarrptblJvyt66/aIHx+QamP6LUA+/RUFY1q7TG
-         MSDg==
-MIME-Version: 1.0
-From: Gene Shuman <gene@valimail.com>
-Date: Wed, 25 Jan 2017 16:13:31 -0800
-Message-ID: <CANtLugNVcUMfjVH22FN=+A6Y_Ss+QX_=GnJ3xGfDY1iuEbbuRA@mail.gmail.com>
-Subject: Test
-To: geneshuman@gmail.com
-Content-Type: text/plain; charset=UTF-8
-
-This is a test!
-"""
         prev = "Authentication-Results: example.com; spf=pass smtp.mailfrom=gmail.com"
-        res = authenticate_message(msg, "example.com", prev=prev, spf=False, dmarc=False, dnsfunc=self.dnsfunc)
-        self.assertEqual(res, "Authentication-Results: example.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass header.d=valimail.com")
-
+        res = authenticate_message(self.message2, "example.com", prev=prev, spf=False, dmarc=False, dnsfunc=self.dnsfunc)
+        self.assertEqual(res, "Authentication-Results: example.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass header.d=example.com header.i=@example.com")
 
 class TestChainValidation(unittest.TestCase):
     def setUp(self):
