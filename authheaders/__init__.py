@@ -38,6 +38,15 @@ __all__ = [
     "chain_validation"
     ]
 
+def get_domain_part(address):
+    '''Return domain part of an email address'''
+    if sys.version_info < (3, 0) and isinstance(address, str):
+        address = bytes(address)
+    elif isinstance(address, str):
+        address = bytes(address, 'utf8')
+    res = re.search(b'@((\w|\w[\w\-]*?\w)\.\w+)', address)
+    return(res.group(1).decode('ascii'))
+
 
 def check_spf(ip, mail_from, helo):
     res, reason = spf.check2(ip, mail_from, helo)
@@ -86,10 +95,7 @@ def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None):
     if len(from_headers) != 1:
         raise Exception("")
     from_header = from_headers[0]
-
-    # kind of janky
-    res = re.search(b'@(.*)>', from_header)
-    from_domain = res.group(1).decode('ascii')
+    from_domain = get_domain_part(from_header)
 
     # get dmarc record
     if(dnsfunc):
@@ -105,12 +111,7 @@ def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None):
     if spf_result and spf_result.result == "pass":
         # The domain in SPF results often includes the local part, even though
         # generally it SHOULD NOT (RFC 7601, Section 2.7.2, last paragraph).
-        if sys.version_info < (3, 0):
-            data = bytes(spf_result.smtp_mailfrom)
-        else:
-            data = bytes(spf_result.smtp_mailfrom, 'utf8')
-        res = re.search(b'@((\w|\w[\w\-]*?\w)\.\w+)', data)
-        mail_from_domain = res.group(1).decode('ascii')
+        mail_from_domain = get_domain_part(spf_result.smtp_mailfrom)
         if aspf == "s" and from_domain == mail_from_domain:
             result = "pass"
         elif aspf == "r" and get_org_domain(from_domain) == get_org_domain(mail_from_domain):
