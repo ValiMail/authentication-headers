@@ -103,9 +103,17 @@ def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None):
     # get result
     result = "fail"
     if spf_result and spf_result.result == "pass":
-        if aspf == "s" and from_domain == spf_result.smtp_mailfrom:
+        # The domain in SPF results often includes the local part, even though
+        # generally it SHOULD NOT (RFC 7601, Section 2.7.2, last paragraph).
+        if sys.version_info < (3, 0):
+            data = bytes(spf_result.smtp_mailfrom)
+        else:
+            data = bytes(spf_result.smtp_mailfrom, 'utf8')
+        res = re.search(b'@((\w|\w[\w\-]*?\w)\.\w+)', data)
+        mail_from_domain = res.group(1).decode('ascii')
+        if aspf == "s" and from_domain == mail_from_domain:
             result = "pass"
-        elif aspf == "r" and get_org_domain(from_domain) == get_org_domain(spf_result.smtp_mailfrom):
+        elif aspf == "r" and get_org_domain(from_domain) == get_org_domain(mail_from_domain):
             result = "pass"
 
     if dkim_result and dkim_result.result == "pass":
