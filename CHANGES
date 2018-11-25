@@ -5,6 +5,8 @@ UNRELEASED Version 0.9.4
     public suffix list to use in lieu of the embedded copy
   - Fixed SPF checks to they work and switched SPF check to use current vice
     legacy pyspf API
+  - Added version checks in setup.py so ipaddress is not required for
+    python3.3 and later (since it is in the standard library)
   - Added COPYING file to document package licenses
   - Added CHANGES file (only covers 0.9.3 and later)
 

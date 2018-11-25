@@ -66,6 +66,22 @@ else: # because the error is different in python2.7
     except OSError:
         pass
 
+# ipaddress in Python standard library python3.3 and later
+requires=[
+    "dkimpy>=0.7.1",
+    "authres>=1.0.1",
+    "publicsuffix",
+    "ipaddress",
+    "dnspython"
+]
+if sys.version_info > (3, 3):
+    requires=[
+        "dkimpy>=0.7.1",
+        "authres>=1.0.1",
+        "publicsuffix",
+        "dnspython"
+    ]
+
 # READM.md support instroduce in setuptools 36.4.0
 if tuple(setuptools.__version__.split('.')) < ('36', '4', '0'):
     raise Exception('authheaders requires setuptools version 36.4.0 or later')
@@ -87,13 +103,7 @@ setup(
         "License :: OSI Approved :: MIT License",
     ],
     package_data=data,
-    install_requires=[
-        "dkimpy>=0.7.1",
-        "authres>=1.0.1",
-        "publicsuffix",
-        "ipaddress",
-        "dnspython"
-    ],
+    install_requires=requires,
     cmdclass={
         'psllocal': SetPSLLocation,
         'pslupdate': UpdatePublicSuffixList
