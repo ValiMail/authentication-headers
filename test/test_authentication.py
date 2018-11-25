@@ -237,7 +237,7 @@ uEzxBDAr518Z8VFbR41in3W4Y3yCDgQlLlcETrS+zYcL
 -----END RSA PRIVATE KEY-----
 """
 
-        res = sign_message(msg, b"dummy", b"example.org", privkey, b"mime-version:date:from:to:subject".split(b':'), sig='ARC', srv_id="lists.example.org", timestamp="12345", standardize=True)
+        res = sign_message(msg, b"dummy", b"example.org", privkey, b"mime-version:date:from:to:subject".split(b':'), sig='ARC', srv_id=b"lists.example.org", timestamp="12345", standardize=True)
 
         headers = [b'ARC-Seal: a=rsa-sha256; b=Pg8Yyk1AgYy2l+kb6iy+mY106AXm5EdgDwJhLP7+XyT6yaS38ZUho+bmgSDorV+LyARH4A 967A/oWMX3coyC7pAGyI+hA3+JifL7P3/aIVP4ooRJ/WUgT79snPuulxE15jg6FgQE68ObA1 /hy77BxdbD9EQxFGNcr/wCKQoeKJ8=; cv=none; d=example.org; i=1; s=dummy; t=12345', b'ARC-Message-Signature: a=rsa-sha256; b=XWeK9DxQ8MUm+Me5GLZ5lQ3L49RdoFv7m7VlrAkKb3/C7jjw33TrTY0KYI5lkowvEGnAtm 5lAqLz67FxA/VrJc2JiYFQR/mBoJLLz/hh9y77byYmSO9tLfIDe2A83+6QsXHO3K6PxTz7+v rCB4wHD9GADeUKVfHzmpZhFuYOa88=; bh=KWSe46TZKCcDbH4klJPo+tjk5LWJnVRlP5pvjXFZYLQ=; c=relaxed/relaxed; d=example.org; h=mime-version:date:from:to:subject; i=1; s=dummy; t=12345', b'ARC-Authentication-Results: i=1; lists.example.org; arc=none; spf=pass smtp.mfrom=jqd@d1.example; dkim=pass (1024-bit key) header.i=@d1.example; dmarc=pass']
 
