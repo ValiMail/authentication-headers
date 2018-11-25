@@ -64,8 +64,8 @@ def lookup_receiver_record(host, dnsfunc=dns_query):
         #     In particular, the "v=DMARC1" tag is mandatory and MUST appear
         #     first in the list. Discard any that do not pass this test.
         # http://tools.ietf.org/html/draft-kucherawy-dmarc-base-04#section-7.1
-        if answer[:9] == '"v=DMARC1':
-            tags = answer_to_dict(answer)
+        if str(answer[0])[:9] == '"v=DMARC1':
+            tags = answer_to_dict(str(answer[0]))
             return tags
         else:
             return {} # maybe raise exception instead?
