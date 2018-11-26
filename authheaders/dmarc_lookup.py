@@ -114,5 +114,8 @@ def get_suffix_list_file_name():
     # TODO: automatically update the suffix list data file
     # <https://publicsuffix.org/list/effective_tld_names.dat>
 
-    retval = resource_filename('authheaders', 'public_suffix_list.txt')
-    return retval
+    try:
+        from authheaders.findpsl import location
+    except ModuleNotFoundError:
+        location  = resource_filename('authheaders', 'public_suffix_list.txt')
+    return location
