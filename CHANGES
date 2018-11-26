@@ -1,4 +1,6 @@
-UNRELEASED Version 0.9.4
+UNRELEASED Version 0.10.0
+  - Changed SPF check default to False in authenticate_message since pyspf is
+    not in install_requires
   - Added new pslupdate option to setup.py so embedded public suffix list copy
     can be easily updated
   - Added new psllocal option to setup.py to set the location of a system

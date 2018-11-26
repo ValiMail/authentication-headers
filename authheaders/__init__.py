@@ -127,7 +127,7 @@ def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None):
     return DMARCAuthenticationResult(result=result, header_from=from_domain)
 
 
-def authenticate_message(msg, authserv_id, prev=None, spf=True, dkim=True, arc=False, dmarc=True, ip=None, mail_from=None, helo=None, dnsfunc=None):
+def authenticate_message(msg, authserv_id, prev=None, spf=False, dkim=True, arc=False, dmarc=True, ip=None, mail_from=None, helo=None, dnsfunc=None):
     """Authenticate an RFC822 message and return the Authentication-Results header
     @param msg: an RFC822 formatted message (with either \\n or \\r\\n line endings)
     @param authserv_id: The id of the server performing the authentication
