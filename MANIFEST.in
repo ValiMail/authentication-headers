@@ -2,3 +2,4 @@ include CHANGES
 include MANIFEST.in
 include COPYING
 include MPL-2.0
+include authheaders/test/*
