@@ -27,6 +27,7 @@ except ImportError:
     pass
 from dns.resolver import (query, NXDOMAIN, NoAnswer, NoNameservers)
 from publicsuffix import PublicSuffixList
+import sys
 
 def answer_to_dict(answer):
     # type: (Text) -> Dict[unicode, unicode]
@@ -114,8 +115,14 @@ def get_suffix_list_file_name():
     # TODO: automatically update the suffix list data file
     # <https://publicsuffix.org/list/effective_tld_names.dat>
 
-    try:
-        from authheaders.findpsl import location
-    except ModuleNotFoundError:
-        location  = resource_filename('authheaders', 'public_suffix_list.txt')
+    if sys.version_info < (3, 0):
+        try:
+            from authheaders.findpsl import location
+        except ImportError:
+            location  = resource_filename('authheaders', 'public_suffix_list.txt')
+    else:
+        try:
+            from authheaders.findpsl import location
+        except ModuleNotFoundError:
+            location  = resource_filename('authheaders', 'public_suffix_list.txt')
     return location
