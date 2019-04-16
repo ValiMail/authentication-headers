@@ -20,7 +20,7 @@
 
 import re
 import sys
-from authheaders.dmarc_lookup import receiver_record, get_org_domain
+from authheaders.dmarc_lookup import dns_query, receiver_record, get_org_domain
 from authres import SPFAuthenticationResult, DKIMAuthenticationResult, AuthenticationResultsHeader
 from authres.arc import ARCAuthenticationResult
 from authres.dmarc import DMARCAuthenticationResult
@@ -44,8 +44,8 @@ def get_domain_part(address):
         address = bytes(address)
     elif isinstance(address, str):
         address = bytes(address, 'utf8')
-    res = re.search(b'@((\w|\w[\w\-]*?\w)\.\w+)', address)
-    return(res.group(1).decode('ascii'))
+    res = re.findall(b'@([a-z0-9.]+)', address)
+    return res[0].decode('ascii')
 
 
 def check_spf(ip, mail_from, helo):
@@ -88,7 +88,18 @@ def check_arc(msg, logger=None, dnsfunc=None):
     return ARCAuthenticationResult(result=cv.decode('ascii'))
 
 
-def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None):
+def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=False):
+
+    def check_psddmarc_list(psdname, dnsfunc=dns_query):
+        """Check psddmarc.org list of PSD DMARC participants"""
+        psd_list_host = '.psddmarc.org'
+        psd_lookup = psdname + psd_list_host
+        answer = dnsfunc(psd_lookup)
+        if answer:
+            return True
+        else:
+            return False
+
     # get from domain
     headers, _ = rfc822_parse(msg)
     from_headers = [x[1] for x in headers if x[0].lower() == b"from"]
@@ -97,11 +108,40 @@ def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None):
     from_header = from_headers[0]
     from_domain = get_domain_part(from_header)
 
-    # get dmarc record
+    # Get dmarc record for domain
     if(dnsfunc):
         record, _ = receiver_record(from_domain, dnsfunc=dnsfunc)
     else:
         record, _ = receiver_record(from_domain)
+    result_comment = 'Used From Domain Record'
+
+    # If no domain record, get org domain record
+    org_domain = get_org_domain(from_domain)
+    if not record:
+        if(dnsfunc):
+            record, _ = receiver_record(org_domain, dnsfunc=dnsfunc)
+        else:
+            record, _ = receiver_record(org_domain)
+        result_comment = 'Used Org Domain Record'
+
+    # Get psddmarc record if doing PSD DMARC, no DMARC record, and PSD is
+    #  listed
+    if (not record) and psddmarc:
+        if(dnsfunc):
+            if check_psddmarc_list(org_domain.split('.',1)[-1],
+                                   dnsfunc=dnsfunc):
+                record, _ = receiver_record(org_domain.split('.',1)[-1],
+                                            dnsfunc=dnsfunc)
+        else:
+            if check_psddmarc_list(org_domain.split('.',1)[-1]):
+                record, _ = receiver_record(org_domain.split('.',1)[-1])
+        if record:
+            result_comment = 'Used Public Suffix Domain Record'
+
+    # If no DMARC record, no result
+    if not record:
+        result = 'none'
+        return DMARCAuthenticationResult(result=result, header_from=from_domain)
 
     adkim = record.get('adkim', 'r')
     aspf  = record.get('aspf',  'r')
@@ -115,19 +155,19 @@ def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None):
         spf_result.smtp_mailfrom = mail_from_domain
         if aspf == "s" and from_domain == mail_from_domain:
             result = "pass"
-        elif aspf == "r" and get_org_domain(from_domain) == get_org_domain(mail_from_domain):
+        elif aspf == "r" and org_domain == get_org_domain(mail_from_domain):
             result = "pass"
 
     if dkim_result and dkim_result.result == "pass":
         if adkim == "s" and from_domain == dkim_result.header_d:
             result = "pass"
-        elif adkim == "r" and get_org_domain(from_domain) == get_org_domain(dkim_result.header_d):
+        elif adkim == "r" and org_domain == get_org_domain(dkim_result.header_d):
             result = "pass"
 
-    return DMARCAuthenticationResult(result=result, header_from=from_domain)
+    return DMARCAuthenticationResult(result=result, result_comment=result_comment, header_from=from_domain)
 
 
-def authenticate_message(msg, authserv_id, prev=None, spf=False, dkim=True, arc=False, dmarc=True, ip=None, mail_from=None, helo=None, dnsfunc=None):
+def authenticate_message(msg, authserv_id, prev=None, spf=False, dkim=True, arc=False, dmarc=True, ip=None, mail_from=None, helo=None, dnsfunc=None, psddmarc=False):
     """Authenticate an RFC822 message and return the Authentication-Results header
     @param msg: an RFC822 formatted message (with either \\n or \\r\\n line endings)
     @param authserv_id: The id of the server performing the authentication
@@ -135,6 +175,7 @@ def authenticate_message(msg, authserv_id, prev=None, spf=False, dkim=True, arc=
     @param spf: Perform SPF check
     @param dkim: Perform DKIM check
     @param dmarc: Perform DMARC check
+    @param psddmarc: Perform PSD DMARC check (draft-ietf-dmarc-psd)
     @param arc: Perform ARC chain validation check
     @param ip: (SPF) IP address of incoming request
     @param mail_from: (SPF) Sender declared in MAIL FROM
@@ -168,7 +209,7 @@ def authenticate_message(msg, authserv_id, prev=None, spf=False, dkim=True, arc=
         results.append(arc_result)
 
     if dmarc:
-        dmarc_result = check_dmarc(msg, spf_result, dkim_result, dnsfunc=dnsfunc)
+        dmarc_result = check_dmarc(msg, spf_result, dkim_result, dnsfunc=dnsfunc, psddmarc=psddmarc)
         results.append(dmarc_result)
 
     auth_res = AuthenticationResultsHeader(authserv_id=authserv_id, results=results)

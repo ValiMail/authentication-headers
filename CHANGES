@@ -1,5 +1,12 @@
 UNRELEASED Version 0.11.0
   - Add support for PSD (Public Suffix Domain) DMARC, draft-ietf-dmarc-psd
+  - Check for DMARC record at the organizational domain level if one is not
+    found at the from domain level
+  - Change email domain extraction regex so it finds a domain more than two
+    lables (e.g. text.example.com)
+  - Add comment to DMARC results in the output Authentication Results header
+    field indicating if the DMARC record was from the from domain, the org
+    domain, or (if enabled) the public suffix domain
   - Update PSL from upstream
 
 2018-11-25 Version 0.10.0
