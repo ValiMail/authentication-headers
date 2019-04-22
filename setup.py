@@ -10,6 +10,28 @@ if sys.version_info[0] == 3:
 else:
   import urllib as request
 
+class UpdatePSDDMARCList(distutils.cmd.Command):
+    """Update embedded copy of PSD DMARC participants list from psddmarc.org."""
+
+    description = 'PSD DMARC update command - use prior to build/install commands'
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        """Download to tempfile and move to authheaders/psddmarc.csv."""
+        tmpfile = tempfile.mkstemp(".tmp", dir="./authheaders")[1]
+        url = 'https://www.psddmarc.org/psddmarc-participants.csv'
+        self.announce(
+            'Updating PSD DMARC registry list',
+            level=distutils.log.INFO)
+        request.urlretrieve(url, tmpfile)
+        os.rename(tmpfile, 'authheaders/psddmarc.csv')
+
 class UpdatePublicSuffixList(distutils.cmd.Command):
     """Update embedded copy of PSL from publicsuffix.org."""
 
@@ -106,6 +128,7 @@ setup(
     install_requires=requires,
     cmdclass={
         'psllocal': SetPSLLocation,
-        'pslupdate': UpdatePublicSuffixList
+        'pslupdate': UpdatePublicSuffixList,
+        'psddmarc': UpdatePSDDMARCList
     },
 )
