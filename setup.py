@@ -81,10 +81,26 @@ if sys.version_info[0] == 3:
             data = {}
     except FileNotFoundError:
         pass
+    try:
+        if os.path.isfile('authheaders/psddmarc.csv') == True:
+            if data == {}:
+                data = {'authheaders': ['psddmarc.csv'],}
+            else:
+                data = {'authheaders': ['public_suffix_list.txt','psddmarc.csv'],}
+    except FileNotFoundError:
+        pass
 else: # because the error is different in python2.7
     try:
         if os.path.getmtime('authheaders/findpsl.py') >= os.path.getmtime('setup.py'):
             data = {}
+    except OSError:
+        pass
+    try:
+        if os.path.isfile('authheaders/psddmarc.csv') == True:
+            if data == {}:
+                data = {'authheaders': ['psddmarc.csv'],}
+            else:
+                data = {'authheaders': ['public_suffix_list.txt','psddmarc.csv'],}
     except OSError:
         pass
 
