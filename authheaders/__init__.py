@@ -25,6 +25,7 @@ from authres import SPFAuthenticationResult, DKIMAuthenticationResult, Authentic
 from authres.arc import ARCAuthenticationResult
 from authres.dmarc import DMARCAuthenticationResult
 from dkim import ARC, DKIM, arc_verify, dkim_verify, DKIMException, rfc822_parse
+from pkg_resources import resource_filename  # Part of setuptools
 
 # Please accept my appologies for doing this
 try:
@@ -92,13 +93,28 @@ def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=F
 
     def check_psddmarc_list(psdname, dnsfunc=dns_query):
         """Check psddmarc.org list of PSD DMARC participants"""
-        psd_list_host = '.psddmarc.org'
-        psd_lookup = psdname + psd_list_host
-        answer = dnsfunc(psd_lookup)
-        if answer:
-            return True
-        else:
-            return False
+        try:
+            # If the PSD registry is locally available, use it.
+            psdfile_name = resource_filename('authheaders', 'psddmarc.csv')
+            psd_file = open(psdfile_name)
+            psds = []
+            for line in psd_file.readlines():
+                sp = line.split(',')
+                if sp[1] == 'Active':
+                    psds += sp[0]
+            if psdname in psds:
+                return True
+            else:
+                return False
+        except:
+            # If not, use the DNS query list.
+            psd_list_host = '.psddmarc.org'
+            psd_lookup = psdname + psd_list_host
+            answer = dnsfunc(psd_lookup)
+            if answer:
+                return True
+            else:
+                return False
 
     # get from domain
     headers, _ = rfc822_parse(msg)
