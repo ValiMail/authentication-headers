@@ -53,3 +53,21 @@ it instead:
 $ sudo apt install publicsuffix<br />
 $ python3 setup.py psllocal --path='/usr/share/publicsuffix/public_suffix_list.dat'<br />
 $ python3 setup.py install
+
+## PSD (Public Suffix Domain) DMARC
+As of version 0.11, support for the experimental PSD DMARC extension is
+provided (See https://datatracker.ietf.org/doc/draft-ietf-dmarc-psd/ for
+details).  It is not enabled by default.
+
+There are currently two operational sources of PSD DMARC participants (both at
+psddmarc.org).  One is an IANA like registry which can be downloaded at
+package build time and used locally.  It works in a manner similar to the PSL
+update option above:
+
+$ python3 setup.py psddmarc<br />
+$ python3 setup.py install<br />
+
+If the registry file is not present, the alternative DNS lookup mechansin is
+used.
+
+Both approaches are described at psddmarc.org.
