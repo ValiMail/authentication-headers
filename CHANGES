@@ -1,4 +1,4 @@
-UNRELEASED Version 0.11.0
+2019-04-23 Version 0.11.0
   - Add support for PSD (Public Suffix Domain) DMARC, draft-ietf-dmarc-psd
     - Check using local copy of psddmarc.org registry if present or
       psddmarc.org DNS lookup service if not
