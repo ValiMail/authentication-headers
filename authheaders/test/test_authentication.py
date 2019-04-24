@@ -74,7 +74,7 @@ Y+vtSBczUiKERHv1yRbcaQtZFh5wtiRrN04BLUTD21MycBX5jYchHjPY/wIDAQAB""",
 
     def test_authenticate_dmarc(self):
         res = authenticate_message(self.message2, "example.com", spf=False, dnsfunc=self.dnsfunc)
-        self.assertEqual(res, "Authentication-Results: example.com; dkim=pass header.d=example.com header.i=@example.com; dmarc=pass header.from=example.com")
+        self.assertEqual(res, "Authentication-Results: example.com; dkim=pass header.d=example.com header.i=@example.com; dmarc=pass (Used From Domain Record) header.from=example.com")
 
     def test_prev(self):
         prev = "Authentication-Results: example.com; spf=pass smtp.mailfrom=gmail.com"
