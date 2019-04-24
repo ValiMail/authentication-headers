@@ -57,6 +57,14 @@ def lookup_receiver_record(host, dnsfunc=dns_query):
     dmarcHost = '_dmarc.{0}'.format(host)
 
     answer = dnsfunc(dmarcHost)
+
+    # This is because dns_query returns a dns.resolver.Answer object while the
+    # test suite dnsfunc returns a string (which does not have quotes on it
+    # like the dns.resolver object.
+    if dnsfunc != dns_query:
+        if answer:
+            answer = ['"' + answer + '"']
+
     if not answer:
         return {}
     else:
