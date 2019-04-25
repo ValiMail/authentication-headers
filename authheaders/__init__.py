@@ -126,23 +126,20 @@ def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=F
 
     # Get dmarc record for domain
     if(dnsfunc):
-        record, _ = receiver_record(from_domain, dnsfunc=dnsfunc)
+        record, orgdomain = receiver_record(from_domain, dnsfunc=dnsfunc)
     else:
-        record, _ = receiver_record(from_domain)
-    result_comment = 'Used From Domain Record'
+        record, orgdomain = receiver_record(from_domain)
 
-    # If no domain record, get org domain record
-    org_domain = get_org_domain(from_domain)
-    if not record:
-        if(dnsfunc):
-            record, _ = receiver_record(org_domain, dnsfunc=dnsfunc)
-        else:
-            record, _ = receiver_record(org_domain)
+    # Report if DMARC record is From Domain or Org Domain
+    if record and orgdomain:
         result_comment = 'Used Org Domain Record'
+    elif record:
+        result_comment = 'Used From Domain Record'
 
     # Get psddmarc record if doing PSD DMARC, no DMARC record, and PSD is
     #  listed
     if (not record) and psddmarc:
+        org_domain = get_org_domain(from_domain)
         if(dnsfunc):
             if check_psddmarc_list(org_domain.split('.',1)[-1],
                                    dnsfunc=dnsfunc):
@@ -177,7 +174,7 @@ def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=F
     if dkim_result and dkim_result.result == "pass":
         if adkim == "s" and from_domain == dkim_result.header_d:
             result = "pass"
-        elif adkim == "r" and org_domain == get_org_domain(dkim_result.header_d):
+        elif adkim == "r" and get_org_domain(from_domain) == get_org_domain(dkim_result.header_d):
             result = "pass"
 
     return DMARCAuthenticationResult(result=result, result_comment=result_comment, header_from=from_domain)
