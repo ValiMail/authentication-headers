@@ -1,3 +1,9 @@
+UNRELEASED Verion 0.12.0
+  - Add policy flag in authenticate_message to return DMARC policy instead of
+    raw DMARC result
+  - Support 'np' non-existent domain policy (draft-ietf-dmarc-psd) in addition
+    to 'p' and 'sp'
+
 2019-04-24 Version 0.11.0
   - Add support for PSD (Public Suffix Domain) DMARC, draft-ietf-dmarc-psd
     - Check using local copy of psddmarc.org registry if present or

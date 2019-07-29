@@ -54,6 +54,14 @@ $ sudo apt install publicsuffix<br />
 $ python3 setup.py psllocal --path='/usr/share/publicsuffix/public_suffix_list.dat'<br />
 $ python3 setup.py install
 
+## DMARC Policy Flag
+As of version 0.12, an option policy flag (default is False) is provided for
+authenticate_message.  If set, DMARC policy recommendations are included
+instead of the default raw DMARC result.  Results are based on domain
+(or org domain) policy as modified by subdomain ('sp') policy or
+non-existent domain ('np') policy.  The new 'np' tag is defined in
+draft-ietf-dmarc-psd.
+
 ## PSD (Public Suffix Domain) DMARC
 As of version 0.11, support for the experimental PSD DMARC extension is
 provided (See https://datatracker.ietf.org/doc/draft-ietf-dmarc-psd/ for

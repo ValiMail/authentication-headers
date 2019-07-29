@@ -126,7 +126,7 @@ if tuple(setuptools.__version__.split('.')) < ('36', '4', '0'):
 
 setup(
     name = "authheaders",
-    version = "0.11.0",
+    version = "0.12.0",
     author = "Gene Shuman",
     author_email = "gene@valimail.com",
     description = ("A library wrapping email authentication header verification and generation."),
