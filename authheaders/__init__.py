@@ -168,7 +168,7 @@ def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=F
         spf_result.smtp_mailfrom = mail_from_domain
         if aspf == "s" and from_domain == mail_from_domain:
             result = "pass"
-        elif aspf == "r" and org_domain == get_org_domain(mail_from_domain):
+        elif aspf == "r" and get_org_domain == get_org_domain(mail_from_domain):
             result = "pass"
 
     if dkim_result and dkim_result.result == "pass":
