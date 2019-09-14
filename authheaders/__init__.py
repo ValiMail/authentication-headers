@@ -130,6 +130,7 @@ def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=F
 
         # Get psddmarc record if doing PSD DMARC, no DMARC record, and PSD is
         #  listed
+        psddomain = False
         if (not record) and psddmarc:
             org_domain = get_org_domain(from_domain)
             if(dnsfunc):
@@ -141,6 +142,7 @@ def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=F
                 if check_psddmarc_list(org_domain.split('.',1)[-1]):
                     record, _ = receiver_record(org_domain.split('.',1)[-1])
             if record:
+                psddomain = True
                 result_comment = 'Used Public Suffix Domain Record'
 
         if record:
@@ -148,6 +150,15 @@ def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=F
             policy = record['p']
             if policy[-1:] == '\\':
                 policy = policy[:-1]
+            try:
+                sp = record['sp']
+                if sp[-1:] == '\\':
+                    sp = sp[:-1]
+            except KeyError:
+                sp = policy
+
+            if orgdomain or psddomain:
+                policy = sp
 
             adkim = record.get('adkim', 'r')
             aspf  = record.get('aspf',  'r')
@@ -187,20 +198,19 @@ def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=F
         for from_header in from_headers:
             from_domain = get_domain_part(from_header)
             domain_results.append(dmarc_per_from(from_domain, spf_result, dkim_result, dnsfunc, psddmarc))
-            #result, result_comment, from_domaon = dmarc_per_from(from_domain, spf_result, dkim_result, dnsfunc, psddmarc)
 
         for domain in domain_results:
             if domain[3] == 'reject':
                 result, result_comment, from_domain, policy = domain
-                return DMARCAuthenticationResult(result=result, result_comment=result_comment, header_from=from_domain)
+                return DMARCAuthenticationResult(result=result, result_comment=result_comment, header_from=from_domain, policy=policy)
         for domain in domain_results:
             if domain[3] == 'quarantine':
                 result, result_comment, from_domain, policy = domain
-                return DMARCAuthenticationResult(result=result, result_comment=result_comment, header_from=from_domain)
+                return DMARCAuthenticationResult(result=result, result_comment=result_comment, header_from=from_domain, policy=policy)
         for domain in domain_results:
             if domain[3] == 'none':
                 result, result_comment, from_domain, policy = domain
-                return DMARCAuthenticationResult(result=result, result_comment=result_comment, header_from=from_domain)
+                return DMARCAuthenticationResult(result=result, result_comment=result_comment, header_from=from_domain, policy=policy)
         result, result_comment, from_domain, policy = domain
     else:
         from_header =  from_headers[0]
@@ -208,7 +218,7 @@ def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=F
         result, result_comment, from_domain, policy = dmarc_per_from(from_domain, spf_result, dkim_result, dnsfunc, psddmarc)
 
     if result != 'none':
-        return DMARCAuthenticationResult(result=result, result_comment=result_comment, header_from=from_domain)
+        return DMARCAuthenticationResult(result=result, result_comment=result_comment, header_from=from_domain, policy=policy)
     else:
         return DMARCAuthenticationResult(result=result, header_from=from_domain)
 
