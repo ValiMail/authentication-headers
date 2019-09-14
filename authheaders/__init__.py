@@ -118,7 +118,7 @@ def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=F
 
     # get from domain
     headers, _ = rfc822_parse(msg)
-    from_headers = [x[1] for x in headers if x[0].lower() == b"from"]
+    from_headers = [x[1].split(b',') for x in headers if x[0].lower() == b"from"][0]
     if len(from_headers) != 1:
         raise Exception("")
     from_header = from_headers[0]

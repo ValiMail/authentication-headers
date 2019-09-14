@@ -5,6 +5,8 @@ UNRELEASED Verion 0.12.0
     to 'p' and 'sp'
   - Fixed error with org domain determination in SPF portion of DMARC
     validation
+  - Correct DMARC message from extraction so multiple from is properly
+    detected
 
 2019-04-24 Version 0.11.0
   - Add support for PSD (Public Suffix Domain) DMARC, draft-ietf-dmarc-psd
