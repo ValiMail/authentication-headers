@@ -43,6 +43,8 @@ class TestAuthenticateMessage(unittest.TestCase):
     def setUp(self):
         self.message = read_test_data("test.message")
         self.message2 = read_test_data("test.message_signed")
+        self.message3 = read_test_data("test.message_multi")
+        self.message4 = read_test_data("test.message_multi2")
         self.key = read_test_data("test.private")
 
     def dnsfunc(self, domain):
@@ -57,7 +59,8 @@ MEeWUwg8Istjqz8BZeTWbf41fbNhte7Y+YqZOwq1Sd0DbvYAD9NOZK9vlfuac0598H\
 Y+vtSBczUiKERHv1yRbcaQtZFh5wtiRrN04BLUTD21MycBX5jYchHjPY/wIDAQAB""",
           "_dmarc.example.com": """v=DMARC1\; p=reject\;\
  rua=mailto:dmarc.reports@valimail.com,mailto:dmarc_agg@vali.email\;\
- ruf=mailto:dmarc.reports@valimail.com,mailto:dmarc_c0cb7153_afrf@vali.email"""
+ ruf=mailto:dmarc.reports@valimail.com,mailto:dmarc_c0cb7153_afrf@vali.email""",
+          "_dmarc.example.org": """v=DMARC1\; p=none"""
         }
         try:
             if isinstance(domain, bytes):
@@ -75,6 +78,16 @@ Y+vtSBczUiKERHv1yRbcaQtZFh5wtiRrN04BLUTD21MycBX5jYchHjPY/wIDAQAB""",
     def test_authenticate_dmarc(self):
         res = authenticate_message(self.message2, "example.com", spf=False, dnsfunc=self.dnsfunc)
         self.assertEqual(res, "Authentication-Results: example.com; dkim=pass header.d=example.com header.i=@example.com; dmarc=pass (Used From Domain Record) header.from=example.com")
+
+    def test_authenticate_dmarc_mult_from(self):
+        self.maxDiff = None
+        res = authenticate_message(self.message3, "example.com", prev='Authentication-Results: example.com; dkim=fail header.d=example.com header.i=@example.com; dkim=pass header.d=example.org header.i=@example.org', spf=False, dkim=False, dnsfunc=self.dnsfunc)
+        self.assertEqual(res, "Authentication-Results: example.com; dkim=fail header.d=example.com header.i=@example.com; dkim=pass header.d=example.org header.i=@example.org; dmarc=fail (Used From Domain Record) header.from=example.com")
+
+    def test_authenticate_dmarc_mult_from2(self):
+        self.maxDiff = None
+        res = authenticate_message(self.message4, "example.com", prev='Authentication-Results: example.com; dkim=fail header.d=example.com header.i=@example.com; dkim=pass header.d=example.org header.i=@example.org', spf=False, dkim=False, dnsfunc=self.dnsfunc)
+        self.assertEqual(res, "Authentication-Results: example.com; dkim=fail header.d=example.com header.i=@example.com; dkim=pass header.d=example.org header.i=@example.org; dmarc=fail (Used From Domain Record) header.from=example.com")
 
     def test_prev(self):
         prev = "Authentication-Results: example.com; spf=pass smtp.mailfrom=gmail.com"

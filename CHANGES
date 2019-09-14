@@ -1,4 +1,5 @@
 UNRELEASED Verion 0.12.0
+  - Implement RFC 7489 Section 6.6.1 multi-valued from processing for DMARC
   - Add policy flag in authenticate_message to return DMARC policy instead of
     raw DMARC result
   - Support 'np' non-existent domain policy (draft-ietf-dmarc-psd) in addition

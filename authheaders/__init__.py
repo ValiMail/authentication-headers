@@ -116,68 +116,101 @@ def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=F
             else:
                 return False
 
+    def dmarc_per_from(from_domain, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=False):
+        # Get dmarc record for domain
+        if(dnsfunc):
+            record, orgdomain = receiver_record(from_domain, dnsfunc=dnsfunc)
+        else:
+            record, orgdomain = receiver_record(from_domain)
+        # Report if DMARC record is From Domain or Org Domain
+        if record and orgdomain:
+            result_comment = 'Used Org Domain Record'
+        elif record:
+            result_comment = 'Used From Domain Record'
+
+        # Get psddmarc record if doing PSD DMARC, no DMARC record, and PSD is
+        #  listed
+        if (not record) and psddmarc:
+            org_domain = get_org_domain(from_domain)
+            if(dnsfunc):
+                if check_psddmarc_list(org_domain.split('.',1)[-1],
+                                       dnsfunc=dnsfunc):
+                    record, _ = receiver_record(org_domain.split('.',1)[-1],
+                                                dnsfunc=dnsfunc)
+            else:
+                if check_psddmarc_list(org_domain.split('.',1)[-1]):
+                    record, _ = receiver_record(org_domain.split('.',1)[-1])
+            if record:
+                result_comment = 'Used Public Suffix Domain Record'
+
+        if record:
+            # find policy
+            policy = record['p']
+            if policy[-1:] == '\\':
+                policy = policy[:-1]
+
+            adkim = record.get('adkim', 'r')
+            aspf  = record.get('aspf',  'r')
+
+            # get result
+            result = "fail"
+            if spf_result and spf_result.result == "pass":
+                # The domain in SPF results often includes the local part, even though
+                # generally it SHOULD NOT (RFC 7601, Section 2.7.2, last paragraph).
+                mail_from_domain = get_domain_part(spf_result.smtp_mailfrom)
+                spf_result.smtp_mailfrom = mail_from_domain
+                if aspf == "s" and from_domain == mail_from_domain:
+                    result = "pass"
+                elif aspf == "r" and get_org_domain(from_domain) == get_org_domain(mail_from_domain):
+                    result = "pass"
+
+            if dkim_result and dkim_result.result == "pass":
+                if adkim == "s" and from_domain == dkim_result.header_d:
+                    result = "pass"
+                elif adkim == "r" and get_org_domain(from_domain) == get_org_domain(dkim_result.header_d):
+                    result = "pass"
+        else:
+            # If no DMARC record, no result
+            result = 'none'
+            result_comment = ''
+            from_domain = ''
+            policy = ''
+        return(result, result_comment, from_domain, policy)
+
     # get from domain
     headers, _ = rfc822_parse(msg)
     from_headers = [x[1].split(b',') for x in headers if x[0].lower() == b"from"][0]
-    if len(from_headers) != 1:
-        raise Exception("")
-    from_header = from_headers[0]
-    from_domain = get_domain_part(from_header)
 
-    # Get dmarc record for domain
-    if(dnsfunc):
-        record, orgdomain = receiver_record(from_domain, dnsfunc=dnsfunc)
+    if len(from_headers) > 1:
+        # multi-from processing per RFC 7489 6.6.1
+        domain_results = []
+        for from_header in from_headers:
+            from_domain = get_domain_part(from_header)
+            domain_results.append(dmarc_per_from(from_domain, spf_result, dkim_result, dnsfunc, psddmarc))
+            #result, result_comment, from_domaon = dmarc_per_from(from_domain, spf_result, dkim_result, dnsfunc, psddmarc)
+
+        for domain in domain_results:
+            if domain[3] == 'reject':
+                result, result_comment, from_domain, policy = domain
+                return DMARCAuthenticationResult(result=result, result_comment=result_comment, header_from=from_domain)
+        for domain in domain_results:
+            if domain[3] == 'quarantine':
+                result, result_comment, from_domain, policy = domain
+                return DMARCAuthenticationResult(result=result, result_comment=result_comment, header_from=from_domain)
+        for domain in domain_results:
+            if domain[3] == 'none':
+                result, result_comment, from_domain, policy = domain
+                return DMARCAuthenticationResult(result=result, result_comment=result_comment, header_from=from_domain)
+        result, result_comment, from_domain, policy = domain
     else:
-        record, orgdomain = receiver_record(from_domain)
+        from_header =  from_headers[0]
+        from_domain = get_domain_part(from_header)
+        result, result_comment, from_domain, policy = dmarc_per_from(from_domain, spf_result, dkim_result, dnsfunc, psddmarc)
 
-    # Report if DMARC record is From Domain or Org Domain
-    if record and orgdomain:
-        result_comment = 'Used Org Domain Record'
-    elif record:
-        result_comment = 'Used From Domain Record'
-
-    # Get psddmarc record if doing PSD DMARC, no DMARC record, and PSD is
-    #  listed
-    if (not record) and psddmarc:
-        org_domain = get_org_domain(from_domain)
-        if(dnsfunc):
-            if check_psddmarc_list(org_domain.split('.',1)[-1],
-                                   dnsfunc=dnsfunc):
-                record, _ = receiver_record(org_domain.split('.',1)[-1],
-                                            dnsfunc=dnsfunc)
-        else:
-            if check_psddmarc_list(org_domain.split('.',1)[-1]):
-                record, _ = receiver_record(org_domain.split('.',1)[-1])
-        if record:
-            result_comment = 'Used Public Suffix Domain Record'
-
-    # If no DMARC record, no result
-    if not record:
-        result = 'none'
+    if result != 'none':
+        return DMARCAuthenticationResult(result=result, result_comment=result_comment, header_from=from_domain)
+    else:
         return DMARCAuthenticationResult(result=result, header_from=from_domain)
-
-    adkim = record.get('adkim', 'r')
-    aspf  = record.get('aspf',  'r')
-
-    # get result
-    result = "fail"
-    if spf_result and spf_result.result == "pass":
-        # The domain in SPF results often includes the local part, even though
-        # generally it SHOULD NOT (RFC 7601, Section 2.7.2, last paragraph).
-        mail_from_domain = get_domain_part(spf_result.smtp_mailfrom)
-        spf_result.smtp_mailfrom = mail_from_domain
-        if aspf == "s" and from_domain == mail_from_domain:
-            result = "pass"
-        elif aspf == "r" and get_org_domain(from_domain) == get_org_domain(mail_from_domain):
-            result = "pass"
-
-    if dkim_result and dkim_result.result == "pass":
-        if adkim == "s" and from_domain == dkim_result.header_d:
-            result = "pass"
-        elif adkim == "r" and get_org_domain(from_domain) == get_org_domain(dkim_result.header_d):
-            result = "pass"
-
-    return DMARCAuthenticationResult(result=result, result_comment=result_comment, header_from=from_domain)
 
 
 def authenticate_message(msg, authserv_id, prev=None, spf=False, dkim=True, arc=False, dmarc=True, ip=None, mail_from=None, helo=None, dnsfunc=None, psddmarc=False):
