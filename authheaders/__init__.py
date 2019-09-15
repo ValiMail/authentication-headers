@@ -156,9 +156,30 @@ def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=F
                     sp = sp[:-1]
             except KeyError:
                 sp = policy
+            try:
+                np = record['np']
+                if np[-1:] == '\\':
+                    np = np[:-1]
+            except KeyError:
+                np = None
 
             if orgdomain or psddomain:
-                policy = sp
+                if np:
+                    exists = False
+                    for qtype in ['a', 'mx', 'aaaa']:
+                        if(dnsfunc):
+                            res = dnsfunc(from_domain)
+                        else:
+                            res = dns_query(from_domain, qtype)
+                        if res:
+                            exists = True
+                            break
+                    if exists:
+                        policy = sp
+                    else:
+                        policy = np
+                else:
+                    policy = sp
 
             adkim = record.get('adkim', 'r')
             aspf  = record.get('aspf',  'r')

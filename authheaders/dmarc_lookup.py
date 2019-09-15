@@ -37,9 +37,9 @@ def answer_to_dict(answer):
     retval = {t[0].strip(): t[1].strip() for t in rawTags}
     return retval
 
-def dns_query(name):
+def dns_query(name, qtype='TXT'):
     try:
-        return query(name, 'TXT')
+        return query(name, qtype)
     except (NXDOMAIN, NoAnswer, NoNameservers):
         return None
 
