@@ -107,7 +107,7 @@ else: # because the error is different in python2.7
 # ipaddress in Python standard library python3.3 and later
 requires=[
     "dkimpy>=0.7.1",
-    "authres>=1.0.1",
+    "authres>=1.2.0",
     "publicsuffix",
     "ipaddress",
     "dnspython"
