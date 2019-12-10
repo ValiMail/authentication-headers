@@ -50,7 +50,7 @@ class TestAuthenticateMessage(unittest.TestCase):
         self.message7 = read_test_data("test.message_np2")
         self.key = read_test_data("test.private")
 
-    def dnsfunc(self, domain):
+    def dnsfunc(self, domain, timeout=5):
         _dns_responses = {
           'test._domainkey.example.com.': read_test_data("test.txt"),
           '20120113._domainkey.gmail.com.': """k=rsa; \
@@ -120,10 +120,17 @@ Y+vtSBczUiKERHv1yRbcaQtZFh5wtiRrN04BLUTD21MycBX5jYchHjPY/wIDAQAB""",
         self.assertEqual(res, "Authentication-Results: example.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass header.d=example.com header.i=@example.com")
 
 class TestChainValidation(unittest.TestCase):
-    def setUp(self):
-        records = {b"dummy._domainkey.example.org.": b"v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDkHlOQoBTzWRiGs5V6NpP3idY6Wk08a5qhdR6wy5bdOKb2jLQiY/J16JYi0Qvx/byYzCNb3W91y3FutACDfzwQ/BC/e/8uBsCR+yz1Lxj+PL6lHvqMKrM3rG4hstT5QjvHO9PzoxZyVYLzBfO2EeC3Ip3G+2kryOTIKT+l/K4w3QIDAQAB"}
-
-        self.dnsfunc = records.get
+    def dnsfuncb(self, domain, timeout=5):
+        _dns_responses = {
+          "dummy._domainkey.example.org.": "v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDkHlOQoBTzWRiGs5V6NpP3idY6Wk08a5qhdR6wy5bdOKb2jLQiY/J16JYi0Qvx/byYzCNb3W91y3FutACDfzwQ/BC/e/8uBsCR+yz1Lxj+PL6lHvqMKrM3rG4hstT5QjvHO9PzoxZyVYLzBfO2EeC3Ip3G+2kryOTIKT+l/K4w3QIDAQAB"
+        }
+        try:
+            if isinstance(domain, bytes):
+                domain = domain.decode('ascii')
+        except UnicodeDecodeError:
+            return None
+        self.assertTrue(domain in _dns_responses,domain)
+        return _dns_responses[domain]
 
     def test_arc_pass(self):
         msg = b"""MIME-Version: 1.0
@@ -165,7 +172,7 @@ This is a test message.
 """
 
         prev = "Authentication-Results: example.com; spf=pass smtp.mailfrom=gmail.com"
-        res = authenticate_message(msg, "example.com", prev=prev, arc=True, dkim=False, spf=False, dmarc=False, dnsfunc=self.dnsfunc)
+        res = authenticate_message(msg, "example.com", prev=prev, arc=True, dkim=False, spf=False, dmarc=False, dnsfunc=self.dnsfuncb)
         self.assertEqual(res, "Authentication-Results: example.com; spf=pass smtp.mailfrom=gmail.com; arc=pass")
 
 
@@ -209,7 +216,7 @@ This is a test message.
 """
 
         prev = "Authentication-Results: example.com; spf=pass smtp.mailfrom=gmail.com"
-        res = authenticate_message(msg, "example.com", prev=prev, arc=True, dkim=False, spf=False, dmarc=False, dnsfunc=self.dnsfunc)
+        res = authenticate_message(msg, "example.com", prev=prev, arc=True, dkim=False, spf=False, dmarc=False, dnsfunc=self.dnsfuncb)
         self.assertEqual(res, "Authentication-Results: example.com; spf=pass smtp.mailfrom=gmail.com; arc=fail")
 
 class TestSignMessage(unittest.TestCase):
