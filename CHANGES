@@ -1,4 +1,4 @@
-UNRELEASED Verion 0.12.0
+2019-09-15 Verion 0.12.0
   - Implement RFC 7489 Section 6.6.1 multi-valued from processing for DMARC
   - Implement support for distinct sub-domain policy ('sp' tag)
   - Include DMARC policy in addition to raw DMARC result in A-R response
