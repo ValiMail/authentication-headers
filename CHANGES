@@ -1,6 +1,7 @@
 2020-01-23 Version 0.12.2
   - Do not pass timestamp value to dkimpy for DKIM signing, only supported for
     ARC (update documentation too) (Closes: Github Issue #3)
+  - Update PSL from upstream
 
 2019-12-10 Version 0.12.1
   - Adapt tests to work with dkimpy 1.0.0 test dns API changes
