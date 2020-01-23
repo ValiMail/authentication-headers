@@ -306,7 +306,7 @@ def sign_message(msg, selector, domain, privkey, sig_headers, sig='DKIM', srv_id
     @param identity: (DKIM) the DKIM identity value for the signature (default "@"+domain)
     @param length: (DKIM) true if the l= tag should be included to indicate body length (default False)
     @param canonicalize: (DKIM) the canonicalization algorithms to use (default (Relaxed, Relaxed))
-    @param timestamp: (for testing) a manual timestamp to use for signature generation
+    @param timestamp: (for ARC testing) a manual timestamp to use for ARC signature generation
     @param logger: An optional logger
     @param standardize: A testing flag for arc to output a standardized header format
     @return: The DKIM-Message-Signature, or ARC set headers
@@ -315,6 +315,6 @@ def sign_message(msg, selector, domain, privkey, sig_headers, sig='DKIM', srv_id
 
     if sig=="DKIM":
         return DKIM(msg, logger=logger).sign(selector, domain, privkey, include_headers=sig_headers,
-                              identity=identity, length=length, canonicalize=canonicalize, timestamp=timestamp)
+                              identity=identity, length=length, canonicalize=canonicalize)
     else:
         return ARC(msg, logger=logger).sign(selector, domain, privkey, srv_id, include_headers=sig_headers, timestamp=timestamp, standardize=standardize)
