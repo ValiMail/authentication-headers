@@ -26,7 +26,11 @@ try:
 except ImportError:
     pass
 from dns.resolver import (query, NXDOMAIN, NoAnswer, NoNameservers)
-from publicsuffix import PublicSuffixList
+try:
+    from publicsuffix2 import PublicSuffixList
+except ImportError:
+    # Fall back to deprecated publicsuffix if publicsuffix2 is not available
+    from publicsuffix import PublicSuffixList
 import sys
 
 def answer_to_dict(answer):

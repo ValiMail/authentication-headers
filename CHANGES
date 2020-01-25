@@ -1,3 +1,6 @@
+2020-01-25 Version 0.13.0
+  - Switch from the deprecated publicsuffix package to publicsuffix2
+
 2020-01-23 Version 0.12.2
   - Do not pass timestamp value to dkimpy for DKIM signing, only supported for
     ARC (update documentation too) (Closes: Github Issue #3)
