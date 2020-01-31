@@ -48,6 +48,7 @@ class TestAuthenticateMessage(unittest.TestCase):
         self.message5 = read_test_data("test.message_sub")
         self.message6 = read_test_data("test.message_np1")
         self.message7 = read_test_data("test.message_np2")
+        self.message8 = read_test_data("test.message_from_name")
         self.key = read_test_data("test.private")
 
     def dnsfunc(self, domain, timeout=5):
@@ -118,6 +119,10 @@ Y+vtSBczUiKERHv1yRbcaQtZFh5wtiRrN04BLUTD21MycBX5jYchHjPY/wIDAQAB""",
         prev = "Authentication-Results: example.com; spf=pass smtp.mailfrom=gmail.com"
         res = authenticate_message(self.message2, "example.com", prev=prev, spf=False, dmarc=False, dnsfunc=self.dnsfunc)
         self.assertEqual(res, "Authentication-Results: example.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass header.d=example.com header.i=@example.com")
+
+    def test_authenticate_message_from_name(self):
+        res = authenticate_message(self.message8, "example.com", spf=False, dmarc=False, dnsfunc=self.dnsfunc)
+        self.assertEqual(res, "Authentication-Results: example.com; dkim=pass header.d=example.com header.i=@example.com")
 
 class TestChainValidation(unittest.TestCase):
     def dnsfuncb(self, domain, timeout=5):
