@@ -213,7 +213,7 @@ def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=F
 
     # get from domain
     headers, _ = rfc822_parse(msg)
-    from_headers = [a[1] for a in getaddresses(x[1].decode('utf-8') for x in headers if x[0].lower() == b"from")]
+    from_headers = [a[1] for a in getaddresses(x[1].decode(errors='ignore').strip() for x in headers if x[0].lower() == b"from")]
 
     if len(from_headers) > 1:
         # multi-from processing per RFC 7489 6.6.1
