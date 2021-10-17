@@ -124,6 +124,7 @@ Y+vtSBczUiKERHv1yRbcaQtZFh5wtiRrN04BLUTD21MycBX5jYchHjPY/wIDAQAB""",
         res = authenticate_message(self.message2, "example.com", prev=prev, spf=False, dmarc=False, dnsfunc=self.dnsfunc)
         self.assertEqual(res, "Authentication-Results: example.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass header.d=example.com header.i=@example.com")
 
+
 class TestChainValidation(unittest.TestCase):
     def dnsfuncb(self, domain, timeout=5):
         _dns_responses = {
