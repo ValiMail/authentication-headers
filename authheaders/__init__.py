@@ -57,13 +57,17 @@ def check_spf(ip, mail_from, helo):
 
 
 def check_dkim(msg, dnsfunc=None):
-    d = DKIM(msg)
     try:
+        d = DKIM(msg)
         if(dnsfunc):
             res = d.verify(dnsfunc=dnsfunc) and 'pass' or 'fail'
         else:
             res = d.verify() and 'pass' or 'fail'
     except DKIMException as e:
+        res = 'fail'
+    except DNSException as e:
+        res = 'temperror'
+    except Exception as e:
         res = 'fail'
 
     header_i = d.signature_fields.get(b'i', b'').decode('ascii')
@@ -86,6 +90,10 @@ def check_arc(msg, logger=None, dnsfunc=None):
         else:
             cv, results, comment = a.verify()
     except DKIMException as e:
+        cv, results, comment = CV_Fail, [], "%s" % e
+    except DNSException as e:
+        cv, results, comment = CV_Fail, [], "%s" % e
+    except Exception as e:
         cv, results, comment = CV_Fail, [], "%s" % e
 
     return ARCAuthenticationResult(result=cv.decode('ascii'))
