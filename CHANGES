@@ -3,6 +3,8 @@ UNRELEASED Version 0.13.1
   - Use email.utils to parse the From header addresses (Thanks to Adam Clark
     for noting this issue and providing the fix) Fixes Github #5
   - Correct minimum authres version requirment in setup.py
+  - Catch more errors.  Add DKIM temperror.  (Thanks to 'niftylettuce') Fixes
+    Github #18
 
 2020-01-25 Version 0.13.0
   - Switch from the deprecated publicsuffix package to publicsuffix2
