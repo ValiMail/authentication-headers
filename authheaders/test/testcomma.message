@@ -1,0 +1,15 @@
+DKIM-Signature: v=1; a=rsa-sha256; c=simple/simple; d=example.com;
+ i=@example.com; q=dns/txt; s=test; t=1634506293; h=message-id : date :
+ from : to : subject : from;\r\n bh=GxJuJkl2SUqxLvdJuTSdj9oaqhgEAqM9jignEld5R5o=;
+ b=am2wg5yucT72QlN2eDpVnmnWwX7VN1qKv6QaOWCotQ34N9xQVcg9Y8sdo8oPHXJPlPYU3
+ PjqiKyUtQfgFwOq3uc4QcsPpVnT2HmAaS92vSIPy+Q0dQGHGMOY7XGGjv0C06WfHzSfR5A9
+ 6nke/iEzSsq09XBz/8TqQEJ/ZoVOl6w=
+Authentication-Results: lists.example.org; arc=none; spf=pass smtp.mfrom=jqd@d1.example; dkim=pass (1024-bit key) header.i=@d1.example; dmarc=pass
+Received: from localhost
+Message-ID: <example@example.com>
+Date: Mon, 01 Jan 2011 01:02:03 +0400
+From: "Test, User" <test@example.com>
+To: somebody@example.com
+Subject: Testing
+
+This is a test message with a comma in the friendly name.
