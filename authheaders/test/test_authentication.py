@@ -132,8 +132,7 @@ Y+vtSBczUiKERHv1yRbcaQtZFh5wtiRrN04BLUTD21MycBX5jYchHjPY/wIDAQAB""",
         self.assertEqual(res, "Authentication-Results: example.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass header.d=example.com header.i=@example.com")
 
     def test_get_domain_part(self):
-        froms_to_test = [['test@example.com', 'example.com'], ]
-        # "From: =?UTF-8?B?QmVkIEJhdGggJiBCZXlvbmQ=?=<BedBath&Beyond@emailbedbathandbeyond.com>"
+        froms_to_test = [['test@example.com', 'example.com'], [""""Test, User" <test@example.com>""", 'example.com'], ["""Test User <test@sub2.example.biz>""", 'sub2.example.biz'], ["""=?UTF-8?B?QmVkIEJhdGggJiBCZXlvbmQ=?=<BdBth&Byond@example.com>""", 'example.com'], ]
         for body_from in froms_to_test:
             res = get_domain_part(body_from[0])
             self.assertEqual(res, body_from[1])
