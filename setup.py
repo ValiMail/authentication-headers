@@ -124,12 +124,16 @@ if sys.version_info >= (3, 3):
 if tuple(setuptools.__version__.split('.')) < ('36', '4', '0'):
     raise Exception('authheaders requires setuptools version 36.4.0 or later')
 
+DESC = """Python module for generating email authentication headers: Authheaders can generate both authentication results header fields and DKIM/ ARC sighatures. It can perform DKIM, SPF, and DMARC validation, and the results are packaged into a single Authentication-Results header. It can also DKIM and ARC sign messages and output the corresponding signature header fields. """
+
 setup(
     name = "authheaders",
     version = "0.14.0",
     author = "Gene Shuman",
     author_email = "gene@valimail.com",
     description = ("A library wrapping email authentication header verification and generation."),
+    long_description=DESC,
+    long_description_content_type='text/plain',
     license = "MIT",
     keywords = ["email", "headers", "SPF", "DKIM", "DMARC", "ARC"],
     url = "https://github.com/ValiMail/authentication-headers",
@@ -139,6 +143,13 @@ setup(
         "Development Status :: 4 - Beta",
         "Topic :: Utilities",
         "License :: OSI Approved :: MIT License",
+        'Natural Language :: English',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 3',
+        'Topic :: Communications :: Email :: Mail Transport Agents',
+        'Topic :: Communications :: Email :: Filters',
+        'Topic :: Software Development :: Libraries :: Python Modules',
     ],
     package_data=data,
     install_requires=requires,
