@@ -9,6 +9,8 @@ UNRELEASED Version 0.14.0
   - Fix issues with upper case characters in domain (Thanks to Mark Sapiro for
     root causing the issue and providing a fix for the domain name regex)
     Fixes Github #13
+  - Include ARC result comment is A-R header field when ARC fails.  Fixes
+    Github #12
 
 2020-01-25 Version 0.13.0
   - Switch from the deprecated publicsuffix package to publicsuffix2

@@ -229,7 +229,7 @@ This is a test message.
 
         prev = "Authentication-Results: example.com; spf=pass smtp.mailfrom=gmail.com"
         res = authenticate_message(msg, "example.com", prev=prev, arc=True, dkim=False, spf=False, dmarc=False, dnsfunc=self.dnsfuncb)
-        self.assertEqual(res, "Authentication-Results: example.com; spf=pass smtp.mailfrom=gmail.com; arc=fail")
+        self.assertEqual(res, "Authentication-Results: example.com; spf=pass smtp.mailfrom=gmail.com; arc=fail (Most recent ARC-Message-Signature did not validate)")
 
 class TestSignMessage(unittest.TestCase):
     def test_arc_sign(self):

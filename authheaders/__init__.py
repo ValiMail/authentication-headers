@@ -95,8 +95,9 @@ def check_arc(msg, logger=None, dnsfunc=None):
         cv, results, comment = CV_Fail, [], "%s" % e
     except Exception as e:
         cv, results, comment = CV_Fail, [], "%s" % e
-
-    return ARCAuthenticationResult(result=cv.decode('ascii'))
+    if comment == 'success':
+        comment = None
+    return ARCAuthenticationResult(result=cv.decode('ascii'), result_comment=comment)
 
 
 def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=False):
