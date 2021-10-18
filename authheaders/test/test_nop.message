@@ -2,7 +2,7 @@ Authentication-Results: lists.example.org; arc=none; spf=pass smtp.mfrom=jqd@d1.
 Received: from localhost
 Message-ID: <example@example.com>
 Date: Mon, 01 Jan 2011 01:02:03 +0400
-From: Test User <test@nop.example.org>
+From: Test User <test@nop.eXample.org>
 To: somebody@example.com
 Subject: Testing
 
