@@ -243,10 +243,12 @@ def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=F
                 result, result_comment, from_domain, policy = domain
                 return DMARCAuthenticationResult(result=result, result_comment=result_comment, header_from=from_domain, policy=policy)
         result, result_comment, from_domain, policy = domain
-    else:
+    elif len(from_headers) == 1:
         from_header =  from_headers[0]
         from_domain = get_domain_part(from_header)
         result, result_comment, from_domain, policy = dmarc_per_from(from_domain, spf_result, dkim_result, dnsfunc, psddmarc)
+    else:
+        result = 'none'
 
     if result != 'none':
         return DMARCAuthenticationResult(result=result, result_comment=result_comment, header_from=from_domain, policy=policy)
