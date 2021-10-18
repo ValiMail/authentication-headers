@@ -49,6 +49,7 @@ class TestAuthenticateMessage(unittest.TestCase):
         self.message6 = read_test_data("test.message_np1")
         self.message7 = read_test_data("test.message_np2")
         self.message8 = read_test_data("testcomma.message")
+        self.message9 = read_test_data("test_nop.message")
         self.key = read_test_data("test.private")
 
     def dnsfunc(self, domain, timeout=5):
@@ -68,6 +69,7 @@ Y+vtSBczUiKERHv1yRbcaQtZFh5wtiRrN04BLUTD21MycBX5jYchHjPY/wIDAQAB""",
           "_dmarc.example.net": """v=DMARC1\; p=none\; sp=reject""",
           "_dmarc.sub.example.net": "",
           "_dmarc.example.biz": """v=DMARC1\; p=none\; sp=quarantine\; np=reject""",
+          "_dmarc.nop.example.org": """v=DMARC1\; sp=quarantine\; np=reject""",
           "_dmarc.sub.example.biz": "",
           "_dmarc.sub2.example.biz": "",
           "sub.example.biz": None,
@@ -114,6 +116,11 @@ Y+vtSBczUiKERHv1yRbcaQtZFh5wtiRrN04BLUTD21MycBX5jYchHjPY/wIDAQAB""",
         self.maxDiff = None
         res = authenticate_message(self.message7, "example.com", prev='Authentication-Results: example.com; dkim=fail header.d=sub2.example.biz header.i=@sub2.example.biz', spf=False, dkim=False, dnsfunc=self.dnsfunc)
         self.assertEqual(res, "Authentication-Results: example.com; dkim=fail header.d=sub2.example.biz header.i=@sub2.example.biz; dmarc=fail (Used Org Domain Record) header.from=sub2.example.biz policy.dmarc=quarantine")
+
+    def test_authenticate_dmarc_no_p(self):
+        self.maxDiff = None
+        res = authenticate_message(self.message9, "example.com", prev='Authentication-Results: example.com; dkim=fail header.d=nop.example.org header.i=@nop.example.org', spf=False, dkim=False, dnsfunc=self.dnsfunc)
+        self.assertEqual(res, "Authentication-Results: example.com; dkim=fail header.d=nop.example.org header.i=@nop.example.org; dmarc=none")
 
     def test_authenticate_dmarc_comma(self):
         res = authenticate_message(self.message8, "example.com", spf=False, dnsfunc=self.dnsfunc)
