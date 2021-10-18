@@ -23,7 +23,7 @@ import unittest
 
 import sys
 import os
-from authheaders import authenticate_message, sign_message
+from authheaders import authenticate_message, sign_message, get_domain_part
 
 #import logging
 #logging.basicConfig(level=10)
@@ -130,6 +130,13 @@ Y+vtSBczUiKERHv1yRbcaQtZFh5wtiRrN04BLUTD21MycBX5jYchHjPY/wIDAQAB""",
         prev = "Authentication-Results: example.com; spf=pass smtp.mailfrom=gmail.com"
         res = authenticate_message(self.message2, "example.com", prev=prev, spf=False, dmarc=False, dnsfunc=self.dnsfunc)
         self.assertEqual(res, "Authentication-Results: example.com; spf=pass smtp.mailfrom=gmail.com; dkim=pass header.d=example.com header.i=@example.com")
+
+    def test_get_domain_part(self):
+        froms_to_test = [['test@example.com', 'example.com'], ]
+        # "From: =?UTF-8?B?QmVkIEJhdGggJiBCZXlvbmQ=?=<BedBath&Beyond@emailbedbathandbeyond.com>"
+        for body_from in froms_to_test:
+            res = get_domain_part(body_from[0])
+            self.assertEqual(res, body_from[1])
 
 class TestChainValidation(unittest.TestCase):
     def dnsfuncb(self, domain, timeout=5):
