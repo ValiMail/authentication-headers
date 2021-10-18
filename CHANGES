@@ -4,6 +4,8 @@ UNRELEASED Version 0.14.0
   - Correct minimum authres version requirment in setup.py
   - Catch more errors.  Add DKIM temperror.  (Thanks to 'niftylettuce') Fixes
     Github #18
+  - Skip DMARC records with no 'p' tag and don't raise an error (also thanks
+    to 'niftylettuce')  Fixes Github #14
 
 2020-01-25 Version 0.13.0
   - Switch from the deprecated publicsuffix package to publicsuffix2

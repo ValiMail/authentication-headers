@@ -155,7 +155,7 @@ def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=F
                 psddomain = True
                 result_comment = 'Used Public Suffix Domain Record'
 
-        if record:
+        if record and record.get('p'): # DMARC P tag is mandatory
             # find policy
             policy = record['p']
             if policy[-1:] == '\\':
