@@ -115,7 +115,7 @@ requires=[
 if sys.version_info >= (3, 3):
     requires=[
         "dkimpy>=0.7.1",
-        "authres>=1.0.1",
+        "authres>=1.2.0",
         "publicsuffix2",
         "dnspython"
     ]
@@ -126,7 +126,7 @@ if tuple(setuptools.__version__.split('.')) < ('36', '4', '0'):
 
 setup(
     name = "authheaders",
-    version = "0.13.0",
+    version = "0.13.1",
     author = "Gene Shuman",
     author_email = "gene@valimail.com",
     description = ("A library wrapping email authentication header verification and generation."),
