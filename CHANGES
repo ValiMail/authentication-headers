@@ -1,3 +1,6 @@
+2021-10-18 Version 0.14.1
+  - Bump version to fix pypi artifacts, no code changes
+
 2021-10-18 Version 0.14.0
   - Use email.utils to parse the From header addresses (Thanks to Adam Clark
     for noting this issue and providing the fix) Fixes Github #5
