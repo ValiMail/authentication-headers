@@ -51,7 +51,35 @@ def get_domain_part(address):
     return res[0].lower().decode('ascii')
 
 
-def dmarc_per_from(from_domain, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=False):
+def check_psddmarc_list(psdname, dnsfunc=dns_query):
+    """Check psddmarc.org list of PSD DMARC participants"""
+    try:
+        # If the PSD registry is locally available, use it.
+        psdfile_name = resource_filename('authheaders', 'psddmarc.csv')
+        psd_file = open(psdfile_name)
+        psds = []
+        for line in psd_file.readlines():
+            sp = line.split(',')
+            if sp[1] == 'Active':
+                psds += sp[0]
+        if psdname in psds:
+            return True
+        else:
+            return False
+    except:
+        # If not, use the DNS query list.
+        psd_list_host = '.psddmarc.org'
+        psd_lookup = psdname + psd_list_host
+        answer = dnsfunc(psd_lookup)
+        if answer:
+            return True
+        else:
+            return False
+
+
+def dmarc_per_from(from_domain, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=False, dmarcbis=False, policy_only=False):
+    """DMARC result for a single From domain."""
+    original_from = from_domain
     # Get dmarc record for domain
     if(dnsfunc):
         record, orgdomain = receiver_record(from_domain, dnsfunc=dnsfunc)
@@ -77,7 +105,7 @@ def dmarc_per_from(from_domain, spf_result=None, dkim_result=None, dnsfunc=None,
             if check_psddmarc_list(org_domain.split('.',1)[-1]):
                 record, _ = receiver_record(org_domain.split('.',1)[-1])
         if record:
-            psddomain = True
+            psddomain = org_domain.split('.',1)[-1]
             result_comment = 'Used Public Suffix Domain Record'
 
     if record and record.get('p'): # DMARC P tag is mandatory
@@ -142,7 +170,18 @@ def dmarc_per_from(from_domain, spf_result=None, dkim_result=None, dnsfunc=None,
         result_comment = ''
         from_domain = ''
         policy = ''
-    return(result, result_comment, from_domain, policy)
+
+    if policy_only:
+        if not record:
+            result_comment = "None"
+        if psddomain:
+            return(original_from, psddomain, result_comment, record)
+        elif not orgdomain or orgdomain == original_from:
+            return(original_from, result_comment, record)
+        elif orgdomain:
+            return(original_from, orgdomain, result_comment, record)
+    else:
+        return(result, result_comment, from_domain, policy)
 
 def check_spf(ip, mail_from, helo):
     res, reason = spf.check2(ip, mail_from, helo)
@@ -194,31 +233,6 @@ def check_arc(msg, logger=None, dnsfunc=None):
 
 
 def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=False):
-
-    def check_psddmarc_list(psdname, dnsfunc=dns_query):
-        """Check psddmarc.org list of PSD DMARC participants"""
-        try:
-            # If the PSD registry is locally available, use it.
-            psdfile_name = resource_filename('authheaders', 'psddmarc.csv')
-            psd_file = open(psdfile_name)
-            psds = []
-            for line in psd_file.readlines():
-                sp = line.split(',')
-                if sp[1] == 'Active':
-                    psds += sp[0]
-            if psdname in psds:
-                return True
-            else:
-                return False
-        except:
-            # If not, use the DNS query list.
-            psd_list_host = '.psddmarc.org'
-            psd_lookup = psdname + psd_list_host
-            answer = dnsfunc(psd_lookup)
-            if answer:
-                return True
-            else:
-                return False
 
     # get from domain
     headers, _ = rfc822_parse(msg)
