@@ -108,7 +108,7 @@ def receiver_record(host, dnsfunc=dns_query):
     newHost = get_org_domain(host)
     retval = lookup_receiver_record(newHost, dnsfunc)
 
-    return (retval, True)
+    return (retval, newHost)
 
 
 def get_org_domain(domain):
