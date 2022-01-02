@@ -110,6 +110,40 @@ def receiver_record(host, dnsfunc=dns_query):
 
     return (retval, newHost)
 
+def receiver_record_walk(host, dnsfunc=dns_query):
+    # type: (str), dnsfunc(optional) -> (Dict[unicode, unicode], is_subdomain)
+    '''Get the DMARC receiver record for a host using the DMARCbis-04 tree
+    walk.
+    :param str host: The host to lookup.
+    :param dnsfunc.  a function from domain names to txt records for DNS lookup
+    :returns: The DMARC reciever record for the host.
+    :rtype:  A dict of {tag => value} results
+
+    The :func:`receiver_record_walk` function looks up the DMARC reciever
+    record for ``host``. If the host does not have a pubished record, the DNS
+    tree is walked up until a record is found or the tree is exhausted.
+    Specific types of lookups such as organizational domain or PSD are no
+    longer relevant.
+    '''
+    hostSansDmarc = host if host[:7] != '_dmarc.' else host[7:]
+
+    retval = lookup_receiver_record(hostSansDmarc, dnsfunc)
+    if retval:
+        return (retval, False)
+
+    # walk the tree
+    tree = hostSansDmarc.split('.')
+    if len(tree) < 5:
+        level = len(tree) - 1
+    else:
+        level = 4
+    while level > 0:
+        newHost = '.'.join(tree[(len(tree) - level):len(tree)])
+        level -= 1
+        retval = lookup_receiver_record(newHost, dnsfunc)
+        if retval:
+            return (retval, newHost)
+    return (retval, False)
 
 def get_org_domain(domain):
     fn = get_suffix_list_file_name()

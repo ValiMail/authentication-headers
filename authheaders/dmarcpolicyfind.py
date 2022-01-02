@@ -43,8 +43,7 @@ def main():
     elif args.select == 'PSD':
         print(authheaders.dmarc_per_from(args.domain, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=True, dmarcbis=False, policy_only=True))
     elif args.select == 'DMARCbis':
-        #print(authheaders.dmarc_per_from(args.domain, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=False, dmarcbis=True, policy_only=True))
-        pass # Not implemented yet
+        print(authheaders.dmarc_per_from(args.domain, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=False, dmarcbis=True, policy_only=True))
 
 if __name__ == '__main__':
   main()

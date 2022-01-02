@@ -21,7 +21,7 @@
 import re
 import sys
 from email.utils import getaddresses
-from authheaders.dmarc_lookup import dns_query, receiver_record, get_org_domain
+from authheaders.dmarc_lookup import dns_query, receiver_record, receiver_record_walk, get_org_domain
 from authres import SPFAuthenticationResult, DKIMAuthenticationResult, AuthenticationResultsHeader
 from authres.arc import ARCAuthenticationResult
 from authres.dmarc import DMARCAuthenticationResult
@@ -80,33 +80,45 @@ def check_psddmarc_list(psdname, dnsfunc=dns_query):
 def dmarc_per_from(from_domain, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=False, dmarcbis=False, policy_only=False):
     """DMARC result for a single From domain."""
     original_from = from_domain
-    # Get dmarc record for domain
-    if(dnsfunc):
-        record, orgdomain = receiver_record(from_domain, dnsfunc=dnsfunc)
-    else:
-        record, orgdomain = receiver_record(from_domain)
-    # Report if DMARC record is From Domain or Org Domain
-    if record and orgdomain:
-        result_comment = 'Used Org Domain Record'
-    elif record:
-        result_comment = 'Used From Domain Record'
-
-    # Get psddmarc record if doing PSD DMARC, no DMARC record, and PSD is
-    #  listed
     psddomain = False
-    if (not record) and psddmarc:
-        org_domain = get_org_domain(from_domain)
+    if not dmarcbis: # It's all different in the future
+        # Get dmarc record for domain
         if(dnsfunc):
-            if check_psddmarc_list(org_domain.split('.',1)[-1],
-                                   dnsfunc=dnsfunc):
-                record, _ = receiver_record(org_domain.split('.',1)[-1],
-                                            dnsfunc=dnsfunc)
+            record, orgdomain = receiver_record(from_domain, dnsfunc=dnsfunc)
         else:
-            if check_psddmarc_list(org_domain.split('.',1)[-1]):
-                record, _ = receiver_record(org_domain.split('.',1)[-1])
-        if record:
-            psddomain = org_domain.split('.',1)[-1]
-            result_comment = 'Used Public Suffix Domain Record'
+            record, orgdomain = receiver_record(from_domain)
+        # Report if DMARC record is From Domain or Org Domain
+        if record and orgdomain:
+            result_comment = 'Used Org Domain Record'
+        elif record:
+            result_comment = 'Used From Domain Record'
+
+        # Get psddmarc record if doing PSD DMARC, no DMARC record, and PSD is
+        #  listed
+        if (not record) and psddmarc:
+            org_domain = get_org_domain(from_domain)
+            if(dnsfunc):
+                if check_psddmarc_list(org_domain.split('.',1)[-1],
+                                       dnsfunc=dnsfunc):
+                    record, _ = receiver_record(org_domain.split('.',1)[-1],
+                                                dnsfunc=dnsfunc)
+            else:
+                if check_psddmarc_list(org_domain.split('.',1)[-1]):
+                    record, _ = receiver_record(org_domain.split('.',1)[-1])
+            if record:
+                psddomain = org_domain.split('.',1)[-1]
+                result_comment = 'Used Public Suffix Domain Record'
+    else:
+        # Get dmarc record for domain (tree walk)
+        if(dnsfunc):
+            record, orgdomain = receiver_record_walk(from_domain, dnsfunc=dnsfunc)
+        else:
+            record, orgdomain = receiver_record_walk(from_domain)
+        # Report if DMARC record is From Domain or Tree Walk Domain
+        if record and orgdomain:
+            result_comment = 'Used Tree Walk Domain Record'
+        elif record:
+            result_comment = 'Used From Domain Record'
 
     if record and record.get('p'): # DMARC P tag is mandatory
         # find policy
