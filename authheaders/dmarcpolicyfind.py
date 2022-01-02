@@ -2,7 +2,7 @@
 
 
 import argparse
-
+import authheaders
 
 
 def main():
@@ -30,19 +30,21 @@ def main():
     parser.add_argument('-s', '--select',
                         choices=['DMARC', 'PSD', 'DMARCbis'], default='DMARC',
                         help='Select policy discovery method: Default is \
-                        DMARC, use multiple -s invocations for multiple \
-                        methods')
+                        DMARC')
     parser.add_argument('-v', '--verbose', action='store_true', default=False,
                         help='turn verbose mode on')
     parser.add_argument('-q', '--quiet', action='store_true', default=False,
                         help='turn quiet mode on.  Exit 0 == policy found.  \
                         Exit 1 == no policy found.')
     args=parser.parse_args()
-    args.domain = bytes(args.domain, encoding='UTF-8')
-    # Make sys.stdin and stdout binary streams.
-    sys.stdin = sys.stdin.detach()
-    sys.stdout = sys.stdout.detach()
 
+    if args.select == 'DMARC':
+        print(authheaders.dmarc_per_from(args.domain, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=False, dmarcbis=False, policy_only=True))
+    elif args.select == 'PSD':
+        print(authheaders.dmarc_per_from(args.domain, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=True, dmarcbis=False, policy_only=True))
+    elif args.select == 'DMARCbis':
+        #print(authheaders.dmarc_per_from(args.domain, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=False, dmarcbis=True, policy_only=True))
+        pass # Not implemented yet
 
 if __name__ == '__main__':
   main()
