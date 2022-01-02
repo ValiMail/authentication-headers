@@ -151,6 +151,11 @@ setup(
         'Topic :: Communications :: Email :: Filters',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
+    entry_points = {
+        'console_scripts' : [
+            'dmarc-policy-find = authheaders.dmarcpolicyfind:main',
+        ],
+    },
     package_data=data,
     install_requires=requires,
     cmdclass={
