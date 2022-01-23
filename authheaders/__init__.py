@@ -111,14 +111,20 @@ def dmarc_per_from(from_domain, spf_result=None, dkim_result=None, dnsfunc=None,
     else:
         # Get dmarc record for domain (tree walk)
         if(dnsfunc):
-            record, orgdomain = receiver_record_walk(from_domain, dnsfunc=dnsfunc)
+            results = receiver_record_walk(from_domain, dnsfunc=dnsfunc)
         else:
-            record, orgdomain = receiver_record_walk(from_domain)
+            results = receiver_record_walk(from_domain)
         # Report if DMARC record is From Domain or Tree Walk Domain
-        if record and orgdomain:
-            result_comment = 'Used Tree Walk Domain Record'
-        elif record:
-            result_comment = 'Used From Domain Record'
+        try:
+            if results[from_domain]:
+                record = results[from_domain]
+                result_comment = 'Used From Domain Record'
+                orgdomain = False
+        except KeyError:
+            for orgdomain, record in results.items():
+                if record:
+                    result_comment = 'Used Tree Walk Record'
+                    break
 
     if record and record.get('p'): # DMARC P tag is mandatory
         # find policy

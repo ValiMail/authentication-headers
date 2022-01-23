@@ -32,6 +32,7 @@ except ImportError:
     # Fall back to deprecated publicsuffix if publicsuffix2 is not available
     from publicsuffix import PublicSuffixList
 import sys
+from collections import OrderedDict
 
 def answer_to_dict(answer):
     # type: (Text) -> Dict[unicode, unicode]
@@ -111,7 +112,7 @@ def receiver_record(host, dnsfunc=dns_query):
     return (retval, newHost)
 
 def receiver_record_walk(host, dnsfunc=dns_query):
-    # type: (str), dnsfunc(optional) -> (Dict[unicode, unicode], is_subdomain)
+    # type: (str), dnsfunc(optional) -> (Dict[unicode, unicode])
     '''Get the DMARC receiver record for a host using the DMARCbis-04 tree
     walk.
     :param str host: The host to lookup.
@@ -124,12 +125,19 @@ def receiver_record_walk(host, dnsfunc=dns_query):
     tree is walked up until a record is found or the tree is exhausted.
     Specific types of lookups such as organizational domain or PSD are no
     longer relevant.
+
+    If multiple records are returned, the first (longest match) is the policy
+    record.  The last, non-PSD (no psd=y flag) is the organizational domain
+    for alignment determination.
+
+    Return a list of results for each step in the tree walk.
     '''
     hostSansDmarc = host if host[:7] != '_dmarc.' else host[7:]
 
+    result = OrderedDict()
     retval = lookup_receiver_record(hostSansDmarc, dnsfunc)
     if retval:
-        return (retval, False)
+        result[hostSansDmarc] = retval
 
     # walk the tree
     tree = hostSansDmarc.split('.')
@@ -142,8 +150,8 @@ def receiver_record_walk(host, dnsfunc=dns_query):
         level -= 1
         retval = lookup_receiver_record(newHost, dnsfunc)
         if retval:
-            return (retval, newHost)
-    return (retval, False)
+            result[newHost] = retval
+    return result
 
 def get_org_domain(domain):
     fn = get_suffix_list_file_name()
