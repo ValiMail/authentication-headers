@@ -2,6 +2,7 @@
 
 
 import argparse
+import sys
 import authheaders
 
 
@@ -39,11 +40,32 @@ def main():
     args=parser.parse_args()
 
     if args.select == 'DMARC':
-        print(authheaders.dmarc_per_from(args.domain, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=False, dmarcbis=False, policy_only=True))
+        res = authheaders.dmarc_per_from(args.domain, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=False, dmarcbis=False, policy_only=True)
+        if not args.quiet:
+            print(res)
+        else:
+            if res[1] == 'None':
+                sys.exit(1)
+            else:
+                sys.exit(0)
     elif args.select == 'PSD':
-        print(authheaders.dmarc_per_from(args.domain, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=True, dmarcbis=False, policy_only=True))
+        res = authheaders.dmarc_per_from(args.domain, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=True, dmarcbis=False, policy_only=True)
+        if not args.quiet:
+            print(res)
+        else:
+            if res[1] == 'None':
+                sys.exit(1)
+            else:
+                sys.exit(0)
     elif args.select == 'DMARCbis':
-        print(authheaders.dmarc_per_from(args.domain, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=False, dmarcbis=True, policy_only=True))
+        res = authheaders.dmarc_per_from(args.domain, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=False, dmarcbis=True, policy_only=True)
+        if not args.quiet:
+            print(res)
+        else:
+            if res[1] == 'None':
+                sys.exit(1)
+            else:
+                sys.exit(0)
 
 if __name__ == '__main__':
   main()
