@@ -1,6 +1,7 @@
 UNRELEASED Version 0.15.0
-  - Add dmarc-policy-find script to allow policy lookup using multiple policy
-    discovery methods
+  - Add dmarc-policy-find script to allow policy lookup and org determination
+    using multiple discovery methods (RFC 7489 (DMARC), RFC 9091 (PSD), and
+    DMARCbis)
 
 2021-10-18 Version 0.14.1
   - Bump version to fix pypi artifacts, no code changes

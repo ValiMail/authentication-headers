@@ -20,6 +20,7 @@
 
 import re
 import sys
+import copy
 from email.utils import getaddresses
 from authheaders.dmarc_lookup import dns_query, receiver_record, receiver_record_walk, get_org_domain
 from authres import SPFAuthenticationResult, DKIMAuthenticationResult, AuthenticationResultsHeader
@@ -90,8 +91,11 @@ def dmarc_per_from(from_domain, spf_result=None, dkim_result=None, dnsfunc=None,
         # Report if DMARC record is From Domain or Org Domain
         if record and orgdomain:
             result_comment = 'Used Org Domain Record'
+            policydomain = orgdomain
         elif record:
             result_comment = 'Used From Domain Record'
+            orgdomain = from_domain
+            policydomain = None
 
         # Get psddmarc record if doing PSD DMARC, no DMARC record, and PSD is
         #  listed
@@ -110,21 +114,56 @@ def dmarc_per_from(from_domain, spf_result=None, dkim_result=None, dnsfunc=None,
                 result_comment = 'Used Public Suffix Domain Record'
     else:
         # Get dmarc record for domain (tree walk)
+        orgdomain = from_domain
+        record = None
         if(dnsfunc):
-            results = receiver_record_walk(from_domain, dnsfunc=dnsfunc)
+            treeresults = receiver_record_walk(from_domain, dnsfunc=dnsfunc)
         else:
-            results = receiver_record_walk(from_domain)
-        # Report if DMARC record is From Domain or Tree Walk Domain
+            treeresults = receiver_record_walk(from_domain)
+        # Report if DMARC record for policy is From Domain or Tree Walk Domain
         try:
-            if results[from_domain]:
-                record = results[from_domain]
+            if treeresults[from_domain]:
+                record = treeresults[from_domain]
                 result_comment = 'Used From Domain Record'
-                orgdomain = False
+                policydomain = None
         except KeyError:
-            for orgdomain, record in results.items():
+            for policydomain, record in treeresults.items():
                 if record:
                     result_comment = 'Used Tree Walk Record'
                     break
+        # Then find org domain
+        # Fake psd=yes (since no one publishes this yet) - FIXME later
+        for dmn, rec in reversed(list(treeresults.items())):
+            if check_psddmarc_list(dmn):
+                treeresults[dmn]['psd'] = 'y'
+                break
+        orgresults = copy.deepcopy(treeresults)
+        psddmn = False
+        for dmn, rec in reversed(list(treeresults.items())):
+            try:
+                if treeresults[dmn]['psd'] == 'y':
+                    psddmn = orgresults.popitem()
+            except:
+                # No PSD record
+                psddomain = False
+        if orgresults:
+            for dmn, rec in reversed(list(orgresults.items())):
+                orgdomain = dmn
+                break
+        else:
+            if psddmn:
+                psddots = len(psddmn[0].split('.'))
+                fromsplit = from_domain.split('.')
+                orgdomain = ''
+                start = True
+                for part in fromsplit[(len(fromsplit) - psddots - 1):]:
+                    if not start:
+                        orgdomain += '.'
+                    start = False
+                    orgdomain += part
+            else:
+                orgdomain = from_domain
+
 
     if record and record.get('p'): # DMARC P tag is mandatory
         # find policy
@@ -167,7 +206,7 @@ def dmarc_per_from(from_domain, spf_result=None, dkim_result=None, dnsfunc=None,
 
         # get result
         result = "fail"
-        if spf_result and spf_result.result == "pass":
+        if not policy_only and spf_result and spf_result.result == "pass":
             # The domain in SPF results often includes the local part, even though
             # generally it SHOULD NOT (RFC 7601, Section 2.7.2, last paragraph).
             mail_from_domain = get_domain_part(spf_result.smtp_mailfrom)
@@ -177,7 +216,7 @@ def dmarc_per_from(from_domain, spf_result=None, dkim_result=None, dnsfunc=None,
             elif aspf == "r" and get_org_domain(from_domain) == get_org_domain(mail_from_domain):
                 result = "pass"
 
-        if dkim_result and dkim_result.result == "pass":
+        if not policy_only and dkim_result and dkim_result.result == "pass":
             if adkim == "s" and from_domain == dkim_result.header_d:
                 result = "pass"
             elif adkim == "r" and get_org_domain(from_domain) == get_org_domain(dkim_result.header_d):
@@ -192,12 +231,11 @@ def dmarc_per_from(from_domain, spf_result=None, dkim_result=None, dnsfunc=None,
     if policy_only:
         if not record:
             result_comment = "None"
+            policydomain = None
         if psddomain:
-            return(original_from, psddomain, result_comment, record)
-        elif not orgdomain or orgdomain == original_from:
-            return(original_from, result_comment, record)
-        elif orgdomain:
-            return(original_from, orgdomain, result_comment, record)
+            policydomain = psddomain
+        results = [original_from, policydomain, result_comment, policy, record, orgdomain]
+        return(results)
     else:
         return(result, result_comment, from_domain, policy)
 
