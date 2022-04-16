@@ -114,55 +114,76 @@ def dmarc_per_from(from_domain, spf_result=None, dkim_result=None, dnsfunc=None,
                 result_comment = 'Used Public Suffix Domain Record'
     else:
         # Get dmarc record for domain (tree walk)
-        orgdomain = from_domain
+        # TODO: Not very efficient.  Always does tree walk, even if not
+        # really needed.  receiver_record_walk does sequential DNS lookups
+        # vice parallel.
+        orgdomain = False
         record = None
         if(dnsfunc):
             treeresults = receiver_record_walk(from_domain, dnsfunc=dnsfunc)
         else:
             treeresults = receiver_record_walk(from_domain)
-        # Report if DMARC record for policy is From Domain or Tree Walk Domain
-        try:
-            if treeresults[from_domain]:
-                record = treeresults[from_domain]
-                result_comment = 'Used From Domain Record'
-                policydomain = None
-        except KeyError:
-            for policydomain, record in treeresults.items():
-                if record:
-                    result_comment = 'Used Tree Walk Record'
-                    break
-        # Then find org domain
+        # Then find org domain, per DMARCbis 07
         # Fake psd=yes (since no one publishes this yet) - FIXME later
         for dmn, rec in reversed(list(treeresults.items())):
             if check_psddmarc_list(dmn):
                 treeresults[dmn]['psd'] = 'y'
                 break
         orgresults = copy.deepcopy(treeresults)
-        psddmn = False
-        for dmn, rec in reversed(list(treeresults.items())):
+        psddomain = False
+        for dmn, rec in list(treeresults.items()):
             try:
-                if treeresults[dmn]['psd'] == 'y':
-                    psddmn = orgresults.popitem()
+                psd = treeresults[dmn]['psd']
+                # For psd=y, use next longer domain as org.
+                if psd == 'y':
+                    if dmn == from_domain:
+                        orgdomain = dmn
+                        record = rec
+                        result_comment = 'Used From Domain which is also PSD'
+                    else:
+                        psddots = len(dmn[0].split('.'))
+                        fromsplit = from_domain.split('.')
+                        orgdomain = ''
+                        start = True
+                        for part in fromsplit[(len(fromsplit) - psddots - 1):]:
+                            if not start:
+                                orgdomain += '.'
+                            start = False
+                            orgdomain += part
+                        try:
+                            if treeresults[orgdomain]:
+                                record = treeresults[orgdomain]
+                        except:
+                            record = rec
+                            psddomain = dmn
+                        result_comment = 'Used Tree Walk, org one level below PSD'
+                    break
+                # For psd=n, this is the org domain.
+                if psd == 'n':
+                    orgdomain = dmn
+                    record = rec
+                    result_comment = 'Used Tree Walk Record which is PSD=n'
+                    break
             except:
-                # No PSD record
-                psddomain = False
-        if orgresults:
-            for dmn, rec in reversed(list(orgresults.items())):
-                orgdomain = dmn
-                break
-        else:
-            if psddmn:
-                psddots = len(psddmn[0].split('.'))
-                fromsplit = from_domain.split('.')
-                orgdomain = ''
-                start = True
-                for part in fromsplit[(len(fromsplit) - psddots - 1):]:
-                    if not start:
-                        orgdomain += '.'
-                    start = False
-                    orgdomain += part
-            else:
-                orgdomain = from_domain
+                # No PSD tag
+                pass
+        if not orgdomain:
+            # If psd=u (implicit or explicit), usual case.
+            for dmn, rec in reversed(list(treeresults.items())):
+                if rec and dmn != from_domain:
+                    orgdomain = dmn
+                    record = rec
+                    result_comment = 'Used Tree Walk Record'
+                    break
+        if not orgdomain:
+            # If all else fails, the From domain is the org domain.
+            orgdomain = from_domain
+            try:
+                record = treeresults[from_domain]
+                result_comment = 'Used From Domain Record'
+            except:
+                record = False
+                result_comment = 'From domain has no DMARC record'
 
 
     if record and record.get('p'): # DMARC P tag is mandatory
@@ -229,11 +250,13 @@ def dmarc_per_from(from_domain, spf_result=None, dkim_result=None, dnsfunc=None,
         policy = ''
 
     if policy_only:
+        if psddomain:
+            policydomain = psddomain
+        else:
+            policydomain = orgdomain
         if not record:
             result_comment = "None"
             policydomain = None
-        if psddomain:
-            policydomain = psddomain
         results = [original_from, policydomain, result_comment, policy, record, orgdomain]
         return(results)
     else:

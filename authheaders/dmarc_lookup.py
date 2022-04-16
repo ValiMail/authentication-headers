@@ -113,7 +113,7 @@ def receiver_record(host, dnsfunc=dns_query):
 
 def receiver_record_walk(host, dnsfunc=dns_query):
     # type: (str), dnsfunc(optional) -> (Dict[unicode, unicode])
-    '''Get the DMARC receiver record for a host using the DMARCbis-04 tree
+    '''Get the DMARC receiver record for a host using the DMARCbis-07 tree
     walk.
     :param str host: The host to lookup.
     :param dnsfunc.  a function from domain names to txt records for DNS lookup
