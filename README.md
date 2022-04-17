@@ -55,17 +55,23 @@ $ python3 setup.py psllocal --path='/usr/share/publicsuffix/public_suffix_list.d
 $ python3 setup.py install
 
 ## DMARC Policy Flag
-As of version 0.12, an option policy flag (default is False) is provided for
+As of version 0.12, an optional policy flag (default is False) is provided for
 authenticate_message.  If set, DMARC policy recommendations are included
 instead of the default raw DMARC result.  Results are based on domain
 (or org domain) policy as modified by subdomain ('sp') policy or
-non-existent domain ('np') policy.  The new 'np' tag is defined in
-draft-ietf-dmarc-psd.
+non-existent domain ('np') policy.  The new 'np' tag is defined in RFC 9091.
+
+## dmarc-policy-find script
+As of version 0.15, a script to lookup DMARC policy for a domain is included.
+
+By default, it uses RFC 7489's policy or organizational domain approach.  It
+can also use the extended/updated RFC 9091 (PSD DMARC) and DMARCbis designs
+instead.
 
 ## PSD (Public Suffix Domain) DMARC
 As of version 0.11, support for the experimental PSD DMARC extension is
-provided (See https://datatracker.ietf.org/doc/draft-ietf-dmarc-psd/ for
-details).  It is not enabled by default.
+provided (See https://datatracker.ietf.org/doc/rfc9091/ for details).  It is
+not enabled by default.
 
 There are currently two operational sources of PSD DMARC participants (both at
 psddmarc.org).  One is an IANA like registry which can be downloaded at
@@ -79,3 +85,9 @@ If the registry file is not present, the alternative DNS lookup mechansin is
 used.
 
 Both approaches are described at psddmarc.org.
+
+## DMARCbis
+As of version 0.15, support for the work in progress DMARCbis organizational
+domain and policy discovery methods is included (up to DMARCbis-07) is
+provided (See https://datatracker.ietf.org/doc/draft-ietf-dmarc-dmarcbis/ for
+details).  It is not enbabled by default.  It uses neither then PSL nor the PSD regsitry.
