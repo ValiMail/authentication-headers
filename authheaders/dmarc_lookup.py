@@ -65,7 +65,7 @@ def lookup_receiver_record(host, dnsfunc=dns_query):
 
     # This is because dns_query returns a dns.resolver.Answer object while the
     # test suite dnsfunc returns a string (which does not have quotes on it
-    # like the dns.resolver object.
+    # like the dns.resolver object).
     if dnsfunc != dns_query:
         if answer:
             answer = ['"' + answer + '"']
@@ -73,16 +73,26 @@ def lookup_receiver_record(host, dnsfunc=dns_query):
     if not answer:
         return {}
     else:
-        # Check that v= field is the first one in the answer (which is in
-        # double quotes) as per Section 7.1 (5):
-        #     In particular, the "v=DMARC1" tag is mandatory and MUST appear
-        #     first in the list. Discard any that do not pass this test.
-        # http://tools.ietf.org/html/draft-kucherawy-dmarc-base-04#section-7.1
-        if str(answer[0])[:9] == '"v=DMARC1':
-            tags = answer_to_dict(str(answer[0]))
-            return tags
+        # One might think the only TXT record at _dmarc would be a DMARC
+        # record, but one would be wrong.  We need to check all the answers,
+        # not just the first.  Also, we can addrss RFC 7489, Section 6.6.3,
+        # Policy Discovery reuls to treat two DMARC records like none.
+        tags = False
+        for result in answer:
+            # Check that v= field is the first one in the answer (which is in
+            # double quotes) as per Section 7.1 (5):
+            #     In particular, the "v=DMARC1" tag is mandatory and MUST appear
+            #     first in the list. Discard any that do not pass this test.
+            # http://tools.ietf.org/html/draft-kucherawy-dmarc-base-04#section-7.1
+            if str(result)[:9] == '"v=DMARC1':
+                if not tags:
+                    tags = answer_to_dict(str(answer[0]))
+                else:
+                    return {} # Multiple DMARC records
+        if tags:
+            return tags # One DMARC record worth of tags
         else:
-            return {} # maybe raise exception instead?
+            return {} # No DMARC records
 
 
 def receiver_record(host, dnsfunc=dns_query):
