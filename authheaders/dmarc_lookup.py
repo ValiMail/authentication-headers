@@ -39,7 +39,10 @@ def answer_to_dict(answer):
     '''Turn the DNS DMARC answer into a dict of tag:value pairs.'''
     a = answer.strip('"').strip(' ')
     rawTags = [t.split('=') for t in a.split(';') if t]
-    retval = {t[0].strip(): t[1].strip() for t in rawTags}
+    retval = {t[0].strip().lower(): t[1].strip().lower() for t in rawTags}
+    # Simpler to lowercase everything and put 'v' back.  Already validated
+    # before answer_to_dict is called, so should be fine.
+    retval['v'] = 'DMARC1'
     return retval
 
 def dns_query(name, qtype='TXT'):

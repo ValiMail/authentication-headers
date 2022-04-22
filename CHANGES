@@ -1,5 +1,8 @@
 2022-04-21 Version 0.15.1
   - Correct issue with updated TXT record processing from 0.15.0
+  - Correct longstanding validation issue and return results as lower case
+    since ABNF allows for upper or lower case for everything except DMARC1 in
+    the version
 
 2022-04-17 Version 0.15.0
   - Add dmarc-policy-find script to allow policy lookup and org determination
