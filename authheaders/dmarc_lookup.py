@@ -86,7 +86,7 @@ def lookup_receiver_record(host, dnsfunc=dns_query):
             # http://tools.ietf.org/html/draft-kucherawy-dmarc-base-04#section-7.1
             if str(result)[:9] == '"v=DMARC1':
                 if not tags:
-                    tags = answer_to_dict(str(answer[0]))
+                    tags = answer_to_dict(str(result))
                 else:
                     return {} # Multiple DMARC records
         if tags:
