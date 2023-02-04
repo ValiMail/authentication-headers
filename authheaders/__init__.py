@@ -27,6 +27,7 @@ from authres import SPFAuthenticationResult, DKIMAuthenticationResult, Authentic
 from authres.arc import ARCAuthenticationResult
 from authres.dmarc import DMARCAuthenticationResult
 from dkim import ARC, DKIM, arc_verify, dkim_verify, DKIMException, rfc822_parse
+from dns.exception import DNSException
 from pkg_resources import resource_filename  # Part of setuptools
 
 # Please accept my appologies for doing this
