@@ -62,8 +62,8 @@ def check_psddmarc_list(psdname, dnsfunc=dns_query):
         psds = []
         for line in psd_file.readlines():
             sp = line.split(',')
-            if sp[1] == 'Active':
-                psds += sp[0]
+            if sp[1] == 'current':
+                psds.append(sp[0][1:])
         if psdname in psds:
             return True
         else:
