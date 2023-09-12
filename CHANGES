@@ -1,3 +1,5 @@
+2023-09-11 Version 0.15.3
+
 2023-03-05 Version 0.15.2
   - Fix missing import for DNSException (Thanks Mark Sapiro)
   - Update PSL from upstream
