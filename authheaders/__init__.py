@@ -18,6 +18,7 @@
 # Contact: Gene Shuman <gene@valimail.com>
 #
 
+import importlib_resources
 import re
 import sys
 import copy
@@ -28,7 +29,6 @@ from authres.arc import ARCAuthenticationResult
 from authres.dmarc import DMARCAuthenticationResult
 from dkim import ARC, DKIM, arc_verify, dkim_verify, DKIMException, rfc822_parse
 from dns.exception import DNSException
-from pkg_resources import resource_filename  # Part of setuptools
 
 # Please accept my appologies for doing this
 try:
@@ -57,17 +57,18 @@ def check_psddmarc_list(psdname, dnsfunc=dns_query):
     """Check psddmarc.org list of PSD DMARC participants"""
     try:
         # If the PSD registry is locally available, use it.
-        psdfile_name = resource_filename('authheaders', 'psddmarc.csv')
-        psd_file = open(psdfile_name)
-        psds = []
-        for line in psd_file.readlines():
-            sp = line.split(',')
-            if sp[1] == 'current':
-                psds.append(sp[0][1:])
-        if psdname in psds:
-            return True
-        else:
-            return False
+        ref = importlib_resources.files('authheaders') / 'psddmarc.csv'
+        with importlib_resources.as_file(ref) as psdfile_name:
+            with open(psdfile_name) as psd_file:
+                psds = []
+                for line in psd_file.readlines():
+                    sp = line.split(',')
+                    if sp[1] == 'current':
+                        psds.append(sp[0][1:])
+                if psdname in psds:
+                    return True
+                else:
+                    return False
     except:
         # If not, use the DNS query list.
         psd_list_host = '.psddmarc.org'
