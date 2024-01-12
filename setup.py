@@ -109,6 +109,7 @@ requires=[
     "dkimpy>=0.7.1",
     "authres>=1.2.0",
     "publicsuffix2",
+    "importlib_resources",
     "ipaddress",
     "dnspython"
 ]
@@ -116,6 +117,7 @@ if sys.version_info >= (3, 3):
     requires=[
         "dkimpy>=0.7.1",
         "authres>=1.2.0",
+        "importlib_resources",
         "publicsuffix2",
         "dnspython"
     ]
