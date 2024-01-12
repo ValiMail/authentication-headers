@@ -3,6 +3,7 @@ UNRELEASED 2024-01-12
     to Andreas Schneider for the change)
   - Add initial doctests for dmarc_lookup.py
   - Correctly strip trailing backslash in parsed DMARC record components
+  - Handle DMARC records containing empty quoted values (#26)
 
 2023-09-11 Version 0.15.3
   - Fix parsing of psddmarc.org CSV file for PSD domains

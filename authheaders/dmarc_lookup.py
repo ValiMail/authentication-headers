@@ -42,9 +42,12 @@ def answer_to_dict(answer):
     {'v': 'DMARC1', 'p': 'reject', 'rua': 'mailto:dmarc.reports@valimail.com,mailto:dmarc_agg@vali.email', 'ruf': 'mailto:dmarc.reports@valimail.com,mailto:dmarc_c0cb7153_afrf@vali.email'}
     >>> answer_to_dict("v=DMARC1\; p=none\; sp=reject")
     {'v': 'DMARC1', 'p': 'none', 'sp': 'reject'}
+    >>> answer_to_dict('"v=DMARC1; p=none; rua=mailto:dmarc.wheaton.rua@wheaton.edu,mailto:dmarc_agg@waybettermarketing.com; ruf=mailto:dmarc.wheaton.ruf@wheaton.edu,mailto:dmarc_fr@waybettermarketing.com; fo=1;" ""')
+    {'v': 'DMARC1', 'p': 'none', 'rua': 'mailto:dmarc.wheaton.rua@wheaton.edu,mailto:dmarc_agg@waybettermarketing.com', 'ruf': 'mailto:dmarc.wheaton.ruf@wheaton.edu,mailto:dmarc_fr@waybettermarketing.com', 'fo': '1'}
+
     '''
 
-    a = answer.strip('"').strip(' ')
+    a = answer.strip('" ')
     rawTags = [t.split('=') for t in a.split(';') if t]
     retval = {t[0].strip().lower(): t[1].strip(' \\').lower() for t in rawTags}
     # Simpler to lowercase everything and put 'v' back.  Already validated
