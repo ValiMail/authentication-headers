@@ -20,10 +20,10 @@
 #
 
 import unittest
-
+import doctest
 import sys
 import os
-from authheaders import authenticate_message, sign_message, get_domain_part
+from authheaders import authenticate_message, sign_message, get_domain_part, dmarc_lookup
 
 #import logging
 #logging.basicConfig(level=10)
@@ -281,5 +281,10 @@ uEzxBDAr518Z8VFbR41in3W4Y3yCDgQlLlcETrS+zYcL
         res = [b"".join(x.split()) for x in res]
         self.assertEqual(res, headers)
 
+def _test():
+    return doctest.testmod(dmarc_lookup)
+
+
 if __name__ == '__main__':
+    _test()
     unittest.main()

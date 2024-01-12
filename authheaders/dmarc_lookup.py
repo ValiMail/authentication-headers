@@ -34,6 +34,10 @@ except ImportError:
 import sys
 from collections import OrderedDict
 
+class DMARCException(Exception):
+    """Base class for DMARC errors."""
+    pass
+
 def answer_to_dict(answer):
     # type: (Text) -> Dict[unicode, unicode]
     '''Turn the DNS DMARC answer into a dict of tag:value pairs.
@@ -44,12 +48,19 @@ def answer_to_dict(answer):
     {'v': 'DMARC1', 'p': 'none', 'sp': 'reject'}
     >>> answer_to_dict('"v=DMARC1; p=none; rua=mailto:dmarc.wheaton.rua@wheaton.edu,mailto:dmarc_agg@waybettermarketing.com; ruf=mailto:dmarc.wheaton.ruf@wheaton.edu,mailto:dmarc_fr@waybettermarketing.com; fo=1;" ""')
     {'v': 'DMARC1', 'p': 'none', 'rua': 'mailto:dmarc.wheaton.rua@wheaton.edu,mailto:dmarc_agg@waybettermarketing.com', 'ruf': 'mailto:dmarc.wheaton.ruf@wheaton.edu,mailto:dmarc_fr@waybettermarketing.com', 'fo': '1'}
-
+    >>> try:
+    ...     answer_to_dict("v=DMARC1;p=none;pct=100;rua=mailto:postmaster@somenet.org;mailto:postmaster@somenet.org;ri=3600;fo=1;")
+    ... except DMARCException as a:
+    ...     print('dmarc_lookup.DMARCException:', a)
+    dmarc_lookup.DMARCException: missing tag or value: v=DMARC1;p=none;pct=100;rua=mailto:postmaster@somenet.org;mailto:postmaster@somenet.org;ri=3600;fo=1;
     '''
 
     a = answer.strip('" ')
     rawTags = [t.split('=') for t in a.split(';') if t]
-    retval = {t[0].strip().lower(): t[1].strip(' \\').lower() for t in rawTags}
+    try:
+        retval = {t[0].strip().lower(): t[1].strip(' \\').lower() for t in rawTags}
+    except IndexError:
+        raise DMARCException('missing tag or value: {0}'.format(answer))
     # Simpler to lowercase everything and put 'v' back.  Already validated
     # before answer_to_dict is called, so should be fine.
     retval['v'] = 'DMARC1'
