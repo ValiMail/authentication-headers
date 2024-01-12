@@ -2,6 +2,7 @@ UNRELEASED 2024-01-12
   - Switch from pkg_resources resource_filename to importlib_resources (thanks
     to Andreas Schneider for the change)
   - Add initial doctests for dmarc_lookup.py
+  - Correctly strip trailing backslash in parsed DMARC record components
 
 2023-09-11 Version 0.15.3
   - Fix parsing of psddmarc.org CSV file for PSD domains

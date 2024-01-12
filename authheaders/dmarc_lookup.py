@@ -39,14 +39,14 @@ def answer_to_dict(answer):
     '''Turn the DNS DMARC answer into a dict of tag:value pairs.
     Examples:
     >>> answer_to_dict("v=DMARC1\; p=reject\; rua=mailto:dmarc.reports@valimail.com,mailto:dmarc_agg@vali.email\; ruf=mailto:dmarc.reports@valimail.com,mailto:dmarc_c0cb7153_afrf@vali.email")
-    {'v': 'DMARC1', 'p': 'reject\\\\', 'rua': 'mailto:dmarc.reports@valimail.com,mailto:dmarc_agg@vali.email\\\\', 'ruf': 'mailto:dmarc.reports@valimail.com,mailto:dmarc_c0cb7153_afrf@vali.email'}
+    {'v': 'DMARC1', 'p': 'reject', 'rua': 'mailto:dmarc.reports@valimail.com,mailto:dmarc_agg@vali.email', 'ruf': 'mailto:dmarc.reports@valimail.com,mailto:dmarc_c0cb7153_afrf@vali.email'}
     >>> answer_to_dict("v=DMARC1\; p=none\; sp=reject")
-    {'v': 'DMARC1', 'p': 'none\\\\', 'sp': 'reject'}
+    {'v': 'DMARC1', 'p': 'none', 'sp': 'reject'}
     '''
 
     a = answer.strip('"').strip(' ')
     rawTags = [t.split('=') for t in a.split(';') if t]
-    retval = {t[0].strip().lower(): t[1].strip().lower() for t in rawTags}
+    retval = {t[0].strip().lower(): t[1].strip(' \\').lower() for t in rawTags}
     # Simpler to lowercase everything and put 'v' back.  Already validated
     # before answer_to_dict is called, so should be fine.
     retval['v'] = 'DMARC1'
