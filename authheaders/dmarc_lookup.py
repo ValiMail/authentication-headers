@@ -19,7 +19,7 @@
 #
 ############################################################################
 from __future__ import absolute_import, unicode_literals, print_function
-from pkg_resources import resource_filename  # Part of setuptools
+import importlib_resources
 try:
     # typing is needed by mypy, but is unused otherwise
     from typing import Dict, Text  # noqa: F401
@@ -166,30 +166,18 @@ def receiver_record_walk(host, dnsfunc=dns_query):
             result[newHost] = retval
     return result
 
-def get_org_domain(domain):
-    fn = get_suffix_list_file_name()
-    with open(fn) as suffixList:
+
+def get_org_domain_from_suffix_list(location, domain):
+    with open(location) as suffixList:
         psl = PublicSuffixList(suffixList)
         return psl.get_public_suffix(domain)
 
 
-def get_suffix_list_file_name():
-    # type: () -> Text
-    '''Get the file name for the public-suffix list data file
-
-    :returns: The filename for the datafile in this module.
-    :rtype: ``str``'''
-    # TODO: automatically update the suffix list data file
-    # <https://publicsuffix.org/list/effective_tld_names.dat>
-
-    if sys.version_info < (3, 0):
-        try:
-            from authheaders.findpsl import location
-        except ImportError:
-            location  = resource_filename('authheaders', 'public_suffix_list.txt')
-    else:
-        try:
-            from authheaders.findpsl import location
-        except ModuleNotFoundError:
-            location  = resource_filename('authheaders', 'public_suffix_list.txt')
-    return location
+def get_org_domain(domain):
+    try:
+        from authheaders.findpsl import location
+        return get_org_domain_from_suffix_list(location, domain)
+    except ModuleNotFoundError:
+        ref = importlib_resources.files('authheaders') / 'public_suffix_list.txt'
+        with importlib_resources.as_file(ref) as location:
+            return get_org_domain_from_suffix_list(location, domain)
