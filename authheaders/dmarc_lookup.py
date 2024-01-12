@@ -36,7 +36,14 @@ from collections import OrderedDict
 
 def answer_to_dict(answer):
     # type: (Text) -> Dict[unicode, unicode]
-    '''Turn the DNS DMARC answer into a dict of tag:value pairs.'''
+    '''Turn the DNS DMARC answer into a dict of tag:value pairs.
+    Examples:
+    >>> answer_to_dict("v=DMARC1\; p=reject\; rua=mailto:dmarc.reports@valimail.com,mailto:dmarc_agg@vali.email\; ruf=mailto:dmarc.reports@valimail.com,mailto:dmarc_c0cb7153_afrf@vali.email")
+    {'v': 'DMARC1', 'p': 'reject\\\\', 'rua': 'mailto:dmarc.reports@valimail.com,mailto:dmarc_agg@vali.email\\\\', 'ruf': 'mailto:dmarc.reports@valimail.com,mailto:dmarc_c0cb7153_afrf@vali.email'}
+    >>> answer_to_dict("v=DMARC1\; p=none\; sp=reject")
+    {'v': 'DMARC1', 'p': 'none\\\\', 'sp': 'reject'}
+    '''
+
     a = answer.strip('"').strip(' ')
     rawTags = [t.split('=') for t in a.split(';') if t]
     retval = {t[0].strip().lower(): t[1].strip().lower() for t in rawTags}
@@ -181,3 +188,11 @@ def get_org_domain(domain):
         ref = importlib_resources.files('authheaders') / 'public_suffix_list.txt'
         with importlib_resources.as_file(ref) as location:
             return get_org_domain_from_suffix_list(location, domain)
+
+def _test():
+    import doctest, dmarc_lookup
+    return doctest.testmod(dmarc_lookup)
+
+
+if __name__ == '__main__':
+    _test()
