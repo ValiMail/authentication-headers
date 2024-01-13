@@ -7,6 +7,7 @@
   - Add dmarc_lookup.DMARCException and raise it for missing tag/values (#27)
   - Catch DMARCException error and return DMARC permerror result (#27)
   - Set DMARC result to permerror if From domain cannot be extracted (#25)
+  - Use dns.resolver.resolve instead of dns.resolver.query due to deprecation
   - Update PSL from upstream
   - Add new option for authenticate_message, dmarcbis to enable DMARC policy
     discovery and alignment per draft-ietf-dmarc-dmarcbis (default is False)

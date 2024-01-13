@@ -25,7 +25,7 @@ try:
     from typing import Dict, Text  # noqa: F401
 except ImportError:
     pass
-from dns.resolver import (query, NXDOMAIN, NoAnswer, NoNameservers)
+from dns.resolver import (resolve, NXDOMAIN, NoAnswer, NoNameservers)
 try:
     from publicsuffix2 import PublicSuffixList
 except ImportError:
@@ -68,7 +68,7 @@ def answer_to_dict(answer):
 
 def dns_query(name, qtype='TXT'):
     try:
-        return query(name, qtype)
+        return resolve(name, qtype)
     except (NXDOMAIN, NoAnswer, NoNameservers):
         return None
 
