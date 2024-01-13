@@ -6,6 +6,7 @@ UNRELEASED 2024-01-12
   - Handle DMARC records containing empty quoted values (#26)
   - Add dmarc_lookup.DMARCException and raise it for missing tag/values (#27)
   - Catch DMARCException error and return DMARC permerror result (#27)
+  - Set DMARC result to permerror if From domain cannot be extracted (#25)
 
 2023-09-11 Version 0.15.3
   - Fix parsing of psddmarc.org CSV file for PSD domains

@@ -51,6 +51,7 @@ class TestAuthenticateMessage(unittest.TestCase):
         self.message8 = read_test_data("testcomma.message")
         self.message9 = read_test_data("test_nop.message")
         self.message10 = read_test_data("test.bad.message")
+        self.message11 = read_test_data("test.nofrom.message")
         self.key = read_test_data("test.private")
 
     def dnsfunc(self, domain, timeout=5):
@@ -97,6 +98,10 @@ Y+vtSBczUiKERHv1yRbcaQtZFh5wtiRrN04BLUTD21MycBX5jYchHjPY/wIDAQAB""",
     def test_authenticate_dmarc_bad(self):
         res = authenticate_message(self.message10, "example.com", dkim=False, spf=False, dnsfunc=self.dnsfunc)
         self.assertEqual(res, 'Authentication-Results: example.com; dmarc=permerror (missing tag or value: "v=DMARC1\\; p=none\\; reject") header.from=bad.example.com policy.dmarc=none')
+
+    def test_authenticate_dmarc_nofrom(self):
+        res = authenticate_message(self.message11, "example.com", dkim=False, spf=False, dnsfunc=self.dnsfunc)
+        self.assertEqual(res, 'Authentication-Results: example.com; dmarc=permerror (Unable to extract From domain: Test User) header.from=none policy.dmarc=none')
 
     def test_authenticate_dmarc_mult_from(self):
         self.maxDiff = None

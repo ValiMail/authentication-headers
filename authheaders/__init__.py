@@ -232,7 +232,10 @@ def dmarc_per_from(from_domain, spf_result=None, dkim_result=None, dnsfunc=None,
         if not policy_only and spf_result and spf_result.result == "pass":
             # The domain in SPF results often includes the local part, even though
             # generally it SHOULD NOT (RFC 7601, Section 2.7.2, last paragraph).
-            mail_from_domain = get_domain_part(spf_result.smtp_mailfrom)
+            try:
+                mail_from_domain = get_domain_part(spf_result.smtp_mailfrom)
+            except IndexError:
+                mail_from_domain = None
             spf_result.smtp_mailfrom = mail_from_domain
             if aspf == "s" and from_domain == mail_from_domain:
                 result = "pass"
@@ -323,7 +326,12 @@ def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=F
         # multi-from processing per RFC 7489 6.6.1
         domain_results = []
         for from_header in from_headers:
-            from_domain = get_domain_part(from_header)
+            try:
+                from_domain = get_domain_part(from_header)
+            except IndexError:
+                result = 'permerror'
+                result_comment = 'Unable to extract From domain: {0}'.format(from_header)
+                return DMARCAuthenticationResult(result=result, result_comment=result_comment, header_from='none', policy='none')
             try:
                 domain_results.append(dmarc_per_from(from_domain, spf_result, dkim_result, dnsfunc, psddmarc))
             except dmarc_lookup.DMARCException as result_comment:
@@ -345,7 +353,12 @@ def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=F
         result, result_comment, from_domain, policy = domain
     elif len(from_headers) == 1:
         from_header =  from_headers[0]
-        from_domain = get_domain_part(from_header)
+        try:
+            from_domain = get_domain_part(from_header)
+        except IndexError:
+            result = 'permerror'
+            result_comment = 'Unable to extract From domain: {0}'.format(from_header)
+            return DMARCAuthenticationResult(result=result, result_comment=result_comment, header_from='none', policy='none')
         try:
             result, result_comment, from_domain, policy = dmarc_per_from(from_domain, spf_result, dkim_result, dnsfunc, psddmarc)
         except dmarc_lookup.DMARCException as result_comment:
