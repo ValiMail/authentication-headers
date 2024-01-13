@@ -88,6 +88,8 @@ Both approaches are described at psddmarc.org.
 
 ## DMARCbis
 As of version 0.15, support for the work in progress DMARCbis organizational
-domain and policy discovery methods is included (up to DMARCbis-07) is
+domain and policy discovery methods is included (up to DMARCbis-29) is
 provided (See https://datatracker.ietf.org/doc/draft-ietf-dmarc-dmarcbis/ for
-details).  It is not enbabled by default.  It uses neither the PSL nor the PSD regsitry.
+details).  It is not enbabled by default.  It uses neither the PSL nor the PSD
+regsitry.  It is enabled by the dmarcbis flag for authenticate_message
+(default is False).

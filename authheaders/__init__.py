@@ -316,7 +316,7 @@ def check_arc(msg, logger=None, dnsfunc=None):
     return ARCAuthenticationResult(result=cv.decode('ascii'), result_comment=comment)
 
 
-def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=False):
+def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=False, dmarcbis=False):
 
     # get from domain
     headers, _ = rfc822_parse(msg)
@@ -333,7 +333,7 @@ def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=F
                 result_comment = 'Unable to extract From domain: {0}'.format(from_header)
                 return DMARCAuthenticationResult(result=result, result_comment=result_comment, header_from='none', policy='none')
             try:
-                domain_results.append(dmarc_per_from(from_domain, spf_result, dkim_result, dnsfunc, psddmarc))
+                domain_results.append(dmarc_per_from(from_domain, spf_result=spf_result, dkim_result=dkim_result, dnsfunc=dnsfunc, psddmarc=psddmarc, dmarcbis=dmarcbis))
             except dmarc_lookup.DMARCException as result_comment:
                 result = 'permerror'
                 return DMARCAuthenticationResult(result=result, result_comment=result_comment, header_from=from_domain, policy='none')
@@ -360,7 +360,7 @@ def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=F
             result_comment = 'Unable to extract From domain: {0}'.format(from_header)
             return DMARCAuthenticationResult(result=result, result_comment=result_comment, header_from='none', policy='none')
         try:
-            result, result_comment, from_domain, policy = dmarc_per_from(from_domain, spf_result, dkim_result, dnsfunc, psddmarc)
+            result, result_comment, from_domain, policy = dmarc_per_from(from_domain, spf_result=spf_result, dkim_result=dkim_result, dnsfunc=dnsfunc, psddmarc=psddmarc, dmarcbis=dmarcbis)
         except dmarc_lookup.DMARCException as result_comment:
             result = 'permerror'
             return DMARCAuthenticationResult(result=result, result_comment=result_comment, header_from=from_domain, policy='none')
@@ -374,7 +374,7 @@ def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=F
         return DMARCAuthenticationResult(result=result, header_from=from_domain)
 
 
-def authenticate_message(msg, authserv_id, prev=None, spf=False, dkim=True, arc=False, dmarc=True, ip=None, mail_from=None, helo=None, dnsfunc=None, psddmarc=False):
+def authenticate_message(msg, authserv_id, prev=None, spf=False, dkim=True, arc=False, dmarc=True, ip=None, mail_from=None, helo=None, dnsfunc=None, psddmarc=False, dmarcbis=False):
     """Authenticate an RFC822 message and return the Authentication-Results header
     @param msg: an RFC822 formatted message (with either \\n or \\r\\n line endings)
     @param authserv_id: The id of the server performing the authentication
@@ -382,7 +382,8 @@ def authenticate_message(msg, authserv_id, prev=None, spf=False, dkim=True, arc=
     @param spf: Perform SPF check
     @param dkim: Perform DKIM check
     @param dmarc: Perform DMARC check
-    @param psddmarc: Perform PSD DMARC check (draft-ietf-dmarc-psd)
+    @param psddmarc: Perform PSD DMARC check (RFC 9091)
+    @param dmarcbis: Use DMARCbis policy discovery and alignment
     @param arc: Perform ARC chain validation check
     @param ip: (SPF) IP address of incoming request
     @param mail_from: (SPF) Sender declared in MAIL FROM
@@ -416,7 +417,7 @@ def authenticate_message(msg, authserv_id, prev=None, spf=False, dkim=True, arc=
         results.append(arc_result)
 
     if dmarc:
-        dmarc_result = check_dmarc(msg, spf_result, dkim_result, dnsfunc=dnsfunc, psddmarc=psddmarc)
+        dmarc_result = check_dmarc(msg, spf_result, dkim_result, dnsfunc=dnsfunc, psddmarc=psddmarc, dmarcbis=dmarcbis)
         results.append(dmarc_result)
 
     auth_res = AuthenticationResultsHeader(authserv_id=authserv_id, results=results)
