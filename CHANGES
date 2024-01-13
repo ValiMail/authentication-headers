@@ -1,4 +1,4 @@
-UNRELEASED 2024-01-12
+2024-01-12 Version 0.16.0
   - Switch from pkg_resources resource_filename to importlib_resources (thanks
     to Andreas Schneider for the change)
   - Add initial doctests for dmarc_lookup.py
