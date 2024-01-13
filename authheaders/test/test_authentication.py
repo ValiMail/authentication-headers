@@ -50,6 +50,7 @@ class TestAuthenticateMessage(unittest.TestCase):
         self.message7 = read_test_data("test.message_np2")
         self.message8 = read_test_data("testcomma.message")
         self.message9 = read_test_data("test_nop.message")
+        self.message10 = read_test_data("test.bad.message")
         self.key = read_test_data("test.private")
 
     def dnsfunc(self, domain, timeout=5):
@@ -73,7 +74,8 @@ Y+vtSBczUiKERHv1yRbcaQtZFh5wtiRrN04BLUTD21MycBX5jYchHjPY/wIDAQAB""",
           "_dmarc.sub.example.biz": "",
           "_dmarc.sub2.example.biz": "",
           "sub.example.biz": None,
-          "sub2.example.biz": "host.example.biz"
+          "sub2.example.biz": "host.example.biz",
+          "_dmarc.bad.example.com": """v=DMARC1\; p=none\; reject""",
         }
         try:
             if isinstance(domain, bytes):
@@ -91,6 +93,10 @@ Y+vtSBczUiKERHv1yRbcaQtZFh5wtiRrN04BLUTD21MycBX5jYchHjPY/wIDAQAB""",
     def test_authenticate_dmarc(self):
         res = authenticate_message(self.message2, "example.com", spf=False, dnsfunc=self.dnsfunc)
         self.assertEqual(res, "Authentication-Results: example.com; dkim=pass header.d=example.com header.i=@example.com; dmarc=pass (Used From Domain Record) header.from=example.com policy.dmarc=reject")
+
+    def test_authenticate_dmarc_bad(self):
+        res = authenticate_message(self.message10, "example.com", dkim=False, spf=False, dnsfunc=self.dnsfunc)
+        self.assertEqual(res, 'Authentication-Results: example.com; dmarc=permerror (missing tag or value: "v=DMARC1\\; p=none\\; reject") header.from=bad.example.com policy.dmarc=none')
 
     def test_authenticate_dmarc_mult_from(self):
         self.maxDiff = None

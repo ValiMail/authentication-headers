@@ -324,7 +324,11 @@ def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=F
         domain_results = []
         for from_header in from_headers:
             from_domain = get_domain_part(from_header)
-            domain_results.append(dmarc_per_from(from_domain, spf_result, dkim_result, dnsfunc, psddmarc))
+            try:
+                domain_results.append(dmarc_per_from(from_domain, spf_result, dkim_result, dnsfunc, psddmarc))
+            except dmarc_lookup.DMARCException as result_comment:
+                result = 'permerror'
+                return DMARCAuthenticationResult(result=result, result_comment=result_comment, header_from=from_domain, policy='none')
 
         for domain in domain_results:
             if domain[3] == 'reject':
@@ -342,7 +346,12 @@ def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=F
     elif len(from_headers) == 1:
         from_header =  from_headers[0]
         from_domain = get_domain_part(from_header)
-        result, result_comment, from_domain, policy = dmarc_per_from(from_domain, spf_result, dkim_result, dnsfunc, psddmarc)
+        try:
+            result, result_comment, from_domain, policy = dmarc_per_from(from_domain, spf_result, dkim_result, dnsfunc, psddmarc)
+        except dmarc_lookup.DMARCException as result_comment:
+            result = 'permerror'
+            return DMARCAuthenticationResult(result=result, result_comment=result_comment, header_from=from_domain, policy='none')
+
     else:
         result = 'none'
 
