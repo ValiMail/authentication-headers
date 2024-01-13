@@ -65,20 +65,20 @@ s8g3FgD2Ap3ZB5DekAo5wMmk4wimDO+U8QzI3SD07y2+07wlNWwIt8svnxgdxGkVbb\
 hzY8i+RQ9DpSVpPbF7ykQxtKXkv/ahW3KjViiAH+ghvvIhkx4xYSIc9oSwVmAl5Oct\
 MEeWUwg8Istjqz8BZeTWbf41fbNhte7Y+YqZOwq1Sd0DbvYAD9NOZK9vlfuac0598H\
 Y+vtSBczUiKERHv1yRbcaQtZFh5wtiRrN04BLUTD21MycBX5jYchHjPY/wIDAQAB""",
-          "_dmarc.example.com": """v=DMARC1\; p=reject\;\
- rua=mailto:dmarc.reports@valimail.com,mailto:dmarc_agg@vali.email\;\
+          "_dmarc.example.com": """v=DMARC1; p=reject;\
+ rua=mailto:dmarc.reports@valimail.com,mailto:dmarc_agg@vali.email;\
  ruf=mailto:dmarc.reports@valimail.com,mailto:dmarc_c0cb7153_afrf@vali.email""",
-          "_dmarc.example.org": """v=DMARC1\; p=none""",
-          "_dmarc.example.net": """v=DMARC1\; p=none\; sp=reject""",
+          "_dmarc.example.org": """v=DMARC1; p=none""",
+          "_dmarc.example.net": """v=DMARC1; p=none; sp=reject""",
           "_dmarc.sub.example.net": "",
-          "_dmarc.example.biz": """v=DMARC1\; p=none\; sp=quarantine\; np=reject""",
-          "_dmarc.nop.example.org": """v=DMARC1\; sp=quarantine\; np=reject""",
+          "_dmarc.example.biz": """v=DMARC1; p=none; sp=quarantine; np=reject""",
+          "_dmarc.nop.example.org": """v=DMARC1; sp=quarantine; np=reject""",
           "_dmarc.sub.example.biz": "",
           "_dmarc.sub2.example.biz": "",
           "sub.example.biz": None,
           "sub2.example.biz": "host.example.biz",
-          "_dmarc.bad.example.com": """v=DMARC1\; p=none\; reject""",
-          "_dmarc.gov": "v=DMARC1; p=reject\; sp=none\; np=reject\; rua=mailto:dotgov_dmarc@cisa.dhs.gov\; psd=y",
+          "_dmarc.bad.example.com": """v=DMARC1; p=none; reject""",
+          "_dmarc.gov": "v=DMARC1; p=reject; sp=none; np=reject; rua=mailto:dotgov_dmarc@cisa.dhs.gov; psd=y",
           "_dmarc.example.gov": "",
           "example.gov": "",
         }
@@ -101,7 +101,7 @@ Y+vtSBczUiKERHv1yRbcaQtZFh5wtiRrN04BLUTD21MycBX5jYchHjPY/wIDAQAB""",
 
     def test_authenticate_dmarc_bad(self):
         res = authenticate_message(self.message10, "example.com", dkim=False, spf=False, dnsfunc=self.dnsfunc)
-        self.assertEqual(res, 'Authentication-Results: example.com; dmarc=permerror (missing tag or value: "v=DMARC1\\; p=none\\; reject") header.from=bad.example.com policy.dmarc=none')
+        self.assertEqual(res, 'Authentication-Results: example.com; dmarc=permerror (missing tag or value: "v=DMARC1; p=none; reject") header.from=bad.example.com policy.dmarc=none')
 
     def test_authenticate_dmarc_nofrom(self):
         res = authenticate_message(self.message11, "example.com", dkim=False, spf=False, dnsfunc=self.dnsfunc)
