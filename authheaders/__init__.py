@@ -18,7 +18,7 @@
 # Contact: Gene Shuman <gene@valimail.com>
 #
 
-import importlib_resources
+import importlib.resources
 import re
 import sys
 import copy
@@ -57,8 +57,8 @@ def check_psddmarc_list(psdname, dnsfunc=dns_query):
     """Check psddmarc.org list of PSD DMARC participants"""
     try:
         # If the PSD registry is locally available, use it.
-        ref = importlib_resources.files('authheaders') / 'psddmarc.csv'
-        with importlib_resources.as_file(ref) as psdfile_name:
+        ref = importlib.resources.files('authheaders') / 'psddmarc.csv'
+        with importlib.resources.as_file(ref) as psdfile_name:
             with open(psdfile_name) as psd_file:
                 psds = []
                 for line in psd_file.readlines():

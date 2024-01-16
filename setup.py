@@ -108,7 +108,6 @@ requires=[
     "dkimpy>=0.7.1",
     "authres>=1.2.0",
     "publicsuffix2",
-    "importlib_resources",
     "dnspython"
 ]
 

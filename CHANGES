@@ -2,6 +2,7 @@
   - Clean up unnecessary escaping of semi-colons in test data (Dig artifacts)
     and adjust related code to resolve SyntaxWarning with Python 3.12 (#29)
   - Set python_requires >3.7 and clean up cruft in setup.py
+  - Use importlib.resources instead of importlib_resources (#30)
 
 2024-01-12 Version 0.16.0
   - Switch from pkg_resources resource_filename to importlib_resources (thanks

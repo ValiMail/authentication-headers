@@ -19,7 +19,7 @@
 #
 ############################################################################
 from __future__ import absolute_import, unicode_literals, print_function
-import importlib_resources
+import importlib.resources
 try:
     # typing is needed by mypy, but is unused otherwise
     from typing import Dict, Text  # noqa: F401
@@ -199,8 +199,8 @@ def get_org_domain(domain):
         from authheaders.findpsl import location
         return get_org_domain_from_suffix_list(location, domain)
     except ModuleNotFoundError:
-        ref = importlib_resources.files('authheaders') / 'public_suffix_list.txt'
-        with importlib_resources.as_file(ref) as location:
+        ref = importlib.resources.files('authheaders') / 'public_suffix_list.txt'
+        with importlib.resources.as_file(ref) as location:
             return get_org_domain_from_suffix_list(location, domain)
 
 def _test():
