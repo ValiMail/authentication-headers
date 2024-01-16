@@ -115,7 +115,7 @@ DESC = """Python module for generating email authentication headers: Authheaders
 
 setup(
     name = "authheaders",
-    version = "0.16.0",
+    version = "0.16.1",
     author = "Gene Shuman",
     author_email = "gene@valimail.com",
     description = ("A library wrapping email authentication header verification and generation."),
