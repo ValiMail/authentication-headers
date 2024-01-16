@@ -104,27 +104,13 @@ else: # because the error is different in python2.7
     except OSError:
         pass
 
-# ipaddress in Python standard library python3.3 and later
 requires=[
     "dkimpy>=0.7.1",
     "authres>=1.2.0",
     "publicsuffix2",
     "importlib_resources",
-    "ipaddress",
     "dnspython"
 ]
-if sys.version_info >= (3, 3):
-    requires=[
-        "dkimpy>=0.7.1",
-        "authres>=1.2.0",
-        "importlib_resources",
-        "publicsuffix2",
-        "dnspython"
-    ]
-
-# READM.md support instroduce in setuptools 36.4.0
-if tuple(setuptools.__version__.split('.')) < ('36', '4', '0'):
-    raise Exception('authheaders requires setuptools version 36.4.0 or later')
 
 DESC = """Python module for generating email authentication headers: Authheaders can generate both authentication results header fields and DKIM/ ARC signatures. It can perform DKIM, SPF, and DMARC validation, and the results are packaged into a single Authentication-Results header. It can also DKIM and ARC sign messages and output the corresponding signature header fields. """
 
@@ -141,6 +127,7 @@ setup(
     url = "https://github.com/ValiMail/authentication-headers",
     zip_safe=False,
     packages=['authheaders'],
+    python_requires='>3.7',
     classifiers=[
         "Development Status :: 4 - Beta",
         "Topic :: Utilities",
