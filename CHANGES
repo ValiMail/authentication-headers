@@ -1,3 +1,6 @@
+2024-0122 UNRELEASED
+  - Add checks for None results to avoid tracebacks (#31)
+
 2024-01-16 Version 0.16.1
   - Clean up unnecessary escaping of semi-colons in test data (Dig artifacts)
     and adjust related code to resolve SyntaxWarning with Python 3.12 (#29)

@@ -269,7 +269,10 @@ def dmarc_per_from(from_domain, spf_result=None, dkim_result=None, dnsfunc=None,
 
 def check_spf(ip, mail_from, helo):
     res, reason = spf.check2(ip, mail_from, helo)
-    return SPFAuthenticationResult(result=res, reason=reason, smtp_mailfrom=mail_from, smtp_helo=helo)
+    if res is not None:
+        return SPFAuthenticationResult(result=res, reason=reason, smtp_mailfrom=mail_from, smtp_helo=helo)
+    else:
+        return SPFAuthenticationResult(result=None, reason=None, smtp_mailfrom=mail_from, smtp_helo=helo)
 
 
 def check_dkim(msg, dnsfunc=None):
@@ -288,8 +291,10 @@ def check_dkim(msg, dnsfunc=None):
 
     header_i = d.signature_fields.get(b'i', b'').decode('ascii')
     header_d = d.signature_fields.get(b'd', b'').decode('ascii')
-
-    return DKIMAuthenticationResult(result=res, header_d=header_d, header_i=header_i)
+    if res:
+        return DKIMAuthenticationResult(result=res, header_d=header_d, header_i=header_i)
+    else:
+        return DKIMAuthenticationResult(result=None)
 
 
 def check_arc(msg, logger=None, dnsfunc=None):
@@ -313,7 +318,10 @@ def check_arc(msg, logger=None, dnsfunc=None):
         cv, results, comment = CV_Fail, [], "%s" % e
     if comment == 'success':
         comment = None
-    return ARCAuthenticationResult(result=cv.decode('ascii'), result_comment=comment)
+    if cv is not None:
+        return ARCAuthenticationResult(result=cv.decode('ascii'), result_comment=comment)
+    else:
+        return ARCAuthenticationResult(result='none', result_comment=comment)
 
 
 def check_dmarc(msg, spf_result=None, dkim_result=None, dnsfunc=None, psddmarc=False, dmarcbis=False):
