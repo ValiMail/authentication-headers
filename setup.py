@@ -5,10 +5,7 @@ import setuptools
 import tempfile
 import os
 import sys
-if sys.version_info[0] == 3:
-  from urllib import request
-else:
-  import urllib as request
+from urllib import request
 
 class UpdatePSDDMARCList(distutils.cmd.Command):
     """Update embedded copy of PSD DMARC participants list from psddmarc.org."""
@@ -75,34 +72,19 @@ class SetPSLLocation(distutils.cmd.Command):
 data = {
     'authheaders': ['public_suffix_list.txt'],
 }
-if sys.version_info[0] == 3:
-    try:
-        if os.path.getmtime('authheaders/findpsl.py') >= os.path.getmtime('setup.py'):
-            data = {}
-    except FileNotFoundError:
-        pass
-    try:
-        if os.path.isfile('authheaders/psddmarc.csv') == True:
-            if data == {}:
-                data = {'authheaders': ['psddmarc.csv'],}
-            else:
-                data = {'authheaders': ['public_suffix_list.txt','psddmarc.csv'],}
-    except FileNotFoundError:
-        pass
-else: # because the error is different in python2.7
-    try:
-        if os.path.getmtime('authheaders/findpsl.py') >= os.path.getmtime('setup.py'):
-            data = {}
-    except OSError:
-        pass
-    try:
-        if os.path.isfile('authheaders/psddmarc.csv') == True:
-            if data == {}:
-                data = {'authheaders': ['psddmarc.csv'],}
-            else:
-                data = {'authheaders': ['public_suffix_list.txt','psddmarc.csv'],}
-    except OSError:
-        pass
+try:
+    if os.path.getmtime('authheaders/findpsl.py') >= os.path.getmtime('setup.py'):
+        data = {}
+except FileNotFoundError:
+    pass
+try:
+    if os.path.isfile('authheaders/psddmarc.csv') == True:
+        if data == {}:
+            data = {'authheaders': ['psddmarc.csv'],}
+        else:
+            data = {'authheaders': ['public_suffix_list.txt','psddmarc.csv'],}
+except FileNotFoundError:
+    pass
 
 requires=[
     "dkimpy>=0.7.1",
