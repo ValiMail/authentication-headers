@@ -1,5 +1,7 @@
 2024-0122 UNRELEASED
   - Add checks for None results to avoid tracebacks (#31)
+  - Account for FWS in From (which is legal, apparently) (#32)
+    (Thanks to Mark Sapiro for the report and the fix)
 
 2024-01-16 Version 0.16.1
   - Clean up unnecessary escaping of semi-colons in test data (Dig artifacts)
