@@ -1,5 +1,6 @@
 2024-06-24 Version 0.16.3
   - Update expected test results to also be compatible with dkimpy >= 1.1.7
+  - Update PSL from upstream
 
 2024-01-22 Version 0.16.2
   - Add checks for None results to avoid tracebacks (#31)
